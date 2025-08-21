@@ -25,7 +25,7 @@ show_menu() {
     echo -e "10. 查看当前挂载点"
     echo -e "11. 一键卸载所有挂载点"
     echo -e "12. 生成 systemd 服务文件并启动"
-    echo -e "${red}0. 退出${green}"
+    echo -e "${red} 0. 退出${green}"
     echo -e "=================================${plain}"
 }
 
