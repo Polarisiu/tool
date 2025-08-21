@@ -157,8 +157,8 @@ show_menu() {
         fi
         printf "${GREEN}  %2s) %-10s${RESET} %b\n" "$i" "$tool" "$status"
     done
-    echo -e "${GREEN} 55) 卸载已安装工具${RESET}"
-    echo -e "${GREEN}  0) 退出${RESET}"
+    echo -e "${GREEN}  55) 卸载已安装工具${RESET}"
+    echo -e "${GREEN}   0) 退出${RESET}"
     echo -e "${GREEN}======================================================${RESET}"
 }
 
