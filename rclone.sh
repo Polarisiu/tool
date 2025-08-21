@@ -1,10 +1,9 @@
 #!/bin/bash
 # ========================================
-# Rclone 管理菜单 (终极简化版，systemd 直接启动)
+# Rclone 管理菜单 (终极安全版，systemd 直接启动)
 # ========================================
 
 # 颜色
-blue="\033[36m"
 green="\033[32m"
 yellow="\033[33m"
 red="\033[31m"
@@ -13,21 +12,21 @@ plain="\033[0m"
 # 显示菜单
 show_menu() {
     clear
-    echo -e "${blue}========== Rclone 管理菜单 ==========${plain}"
-    echo -e "${green}1.${plain} 安装 Rclone"
-    echo -e "${green}2.${plain} 卸载 Rclone"
-    echo -e "${green}3.${plain} 配置 Rclone"
-    echo -e "${green}4.${plain} 挂载远程存储到本地"
-    echo -e "${green}5.${plain} 同步 本地 → 远程"
-    echo -e "${green}6.${plain} 同步 远程 → 本地"
-    echo -e "${green}7.${plain} 查看远程存储文件 (rclone ls)"
-    echo -e "${green}8.${plain} 查看远程存储列表 (rclone listremotes)"
-    echo -e "${green}9.${plain} 卸载挂载点 (按远程名称)"
-    echo -e "${green}10.${plain} 查看当前挂载点"
-    echo -e "${green}11.${plain} 一键卸载所有挂载点"
-    echo -e "${green}12.${plain} 生成 systemd 服务文件并启动"
-    echo -e "${red}0.${plain} 退出"
-    echo -e "${blue}=================================${plain}"
+    echo -e "${green}========== Rclone 管理菜单 =========="
+    echo -e "1. 安装 Rclone"
+    echo -e "2. 卸载 Rclone（含 systemd 服务）"
+    echo -e "3. 配置 Rclone"
+    echo -e "4. 挂载远程存储到本地"
+    echo -e "5. 同步 本地 → 远程"
+    echo -e "6. 同步 远程 → 本地"
+    echo -e "7. 查看远程存储文件 (rclone ls)"
+    echo -e "8. 查看远程存储列表 (rclone listremotes)"
+    echo -e "9. 卸载挂载点 (按远程名称)"
+    echo -e "10. 查看当前挂载点"
+    echo -e "11. 一键卸载所有挂载点"
+    echo -e "12. 生成 systemd 服务文件并启动"
+    echo -e "${red}0. 退出${green}"
+    echo -e "=================================${plain}"
 }
 
 # 安装 Rclone
@@ -38,31 +37,50 @@ install_rclone() {
     echo -e "${green}Rclone 安装完成！${plain}"
 }
 
-# 卸载 Rclone
+# 卸载 Rclone（含 systemd 服务文件和挂载 PID）
 uninstall_rclone() {
     echo -e "${yellow}正在卸载 Rclone...${plain}"
+
+    # 删除 rclone 二进制
     sudo rm -f /usr/bin/rclone /usr/local/bin/rclone
-    echo -e "${green}Rclone 已卸载！${plain}"
+
+    # 停止并删除所有 systemd 服务
+    sudo systemctl stop 'rclone-mount@*' 2>/dev/null
+    sudo systemctl disable 'rclone-mount@*' 2>/dev/null
+    sudo rm -f /etc/systemd/system/rclone-mount@*.service
+    sudo systemctl daemon-reload
+
+    # 删除 PID 文件
+    sudo rm -f /var/run/rclone_*.pid
+
+    echo -e "${green}Rclone 及所有 systemd 挂载服务已卸载！${plain}"
 }
 
 # 配置 Rclone
-config_rclone() { 
+config_rclone() {
     rclone config
 }
 
 # 列出远程
-list_remotes() { 
+list_remotes() {
     rclone listremotes
 }
 
-# 挂载远程
+# 挂载远程（增加挂载前检查）
 mount_remote() {
     read -p "请输入远程名称: " remote
     [ -z "$remote" ] && { echo -e "${red}远程名称不能为空${plain}"; return; }
 
-    read -p "请输入挂载路径 (默认 /mnt/$remote): " path
-    path=${path:-/mnt/$remote}
+    path="/mnt/$remote"
+    read -p "请输入挂载路径 (默认 $path): " input_path
+    path=${input_path:-$path}
     mkdir -p "$path"
+
+    # 检查是否已挂载
+    if mount | grep -q "on $path type"; then
+        echo -e "${yellow}$remote 已经挂载在 $path，无需重复挂载${plain}"
+        return
+    fi
 
     log="/var/log/rclone_${remote}.log"
     pidfile="/var/run/rclone_${remote}.pid"
@@ -81,16 +99,12 @@ unmount_remote_by_name() {
     [ -z "$remote" ] && { echo -e "${red}远程名称不能为空${plain}"; return; }
 
     pidfile="/var/run/rclone_${remote}.pid"
+    path="/mnt/$remote"
+
     if [ -f "$pidfile" ]; then
-        pid=$(cat "$pidfile")
-        if kill -0 "$pid" >/dev/null 2>&1; then
-            kill "$pid"
-            rm -f "$pidfile"
-            echo -e "${green}已卸载远程: $remote (PID: $pid)${plain}"
-        else
-            echo -e "${red}PID $pid 不存在，可能已卸载${plain}"
-            rm -f "$pidfile"
-        fi
+        fusermount -u "$path" 2>/dev/null || umount "$path" 2>/dev/null
+        rm -f "$pidfile"
+        echo -e "${green}已卸载远程: $remote${plain}"
     else
         echo -e "${red}找不到 $remote 的挂载 PID 文件${plain}"
     fi
@@ -101,10 +115,11 @@ unmount_all() {
     echo -e "${yellow}正在卸载所有 rclone 挂载点...${plain}"
     for pidfile in /var/run/rclone_*.pid; do
         [ -f "$pidfile" ] || continue
-        pid=$(cat "$pidfile")
-        kill "$pid" 2>/dev/null
+        remote=$(basename "$pidfile" | sed 's/rclone_//;s/\.pid//')
+        path="/mnt/$remote"
+        fusermount -u "$path" 2>/dev/null || umount "$path" 2>/dev/null
         rm -f "$pidfile"
-        echo -e "${green}已卸载 PID: $pid${plain}"
+        echo -e "${green}已卸载 $remote${plain}"
     done
 }
 
@@ -124,7 +139,7 @@ sync_local_to_remote() {
     remote_dir=${remote_dir:-backup}
 
     echo -e "${yellow}正在同步 $local → ${remote}:$remote_dir${plain}"
-    rclone sync "$local" "${remote}:$remote_dir" -v
+    rclone sync "$local" "${remote}:$remote_dir" -v -P
 }
 
 # 同步 远程 → 本地
@@ -137,11 +152,11 @@ sync_remote_to_local() {
     remote_dir=${remote_dir:-backup}
 
     echo -e "${yellow}正在同步 ${remote}:$remote_dir → $local${plain}"
-    rclone sync "${remote}:$remote_dir" "$local" -v
+    rclone sync "${remote}:$remote_dir" "$local" -v -P
 }
 
 # 查看远程文件
-list_files_remote() { 
+list_files_remote() {
     read -p "请输入远程名称: " remote
     [ -z "$remote" ] && { echo -e "${red}远程名称不能为空${plain}"; return; }
     rclone ls "${remote}:"
@@ -168,6 +183,8 @@ ExecStart=/usr/bin/rclone mount ${remote}: $path --allow-other --vfs-cache-mode 
 ExecStop=/bin/fusermount -u $path
 Restart=always
 RestartSec=10
+StandardOutput=append:/var/log/rclone_${remote}.log
+StandardError=append:/var/log/rclone_${remote}.log
 
 [Install]
 WantedBy=multi-user.target
@@ -201,5 +218,5 @@ while true; do
         0) echo -e "${green}退出菜单，再见！${plain}"; exit 0 ;;
         *) echo -e "${red}无效选项，请重新输入${plain}" ;;
     esac
-    read -p "按回车继续..." enter
+    read -r -p "按回车继续..."
 done
