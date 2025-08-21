@@ -30,20 +30,16 @@ show_account_info() {
     echo -e "${GREEN}提示:${RESET}"
     echo -e "${YELLOW}在 Windows 中可以使用快捷键 Windows + R 打开“运行”框，输入 powershell 回车，进入 PowerShell 窗口。${RESET}"
     echo -e "${YELLOW}输入以下命令：irm https://get.activated.win | iex 激活 ${RESET}"
+    echo -e "${GREEN}请在合适的时候手动输入'reboot'重启系统${RESET}"
 }
 
-# 提示重启
+# 重启提示
 prompt_reboot() {
     echo -ne "${YELLOW}是否立即重启系统？(y/N): ${RESET}"
     read answer
     case $answer in
-        [Yy]*) 
-            echo -e "${GREEN}系统即将重启...${RESET}"
-            reboot
-            ;;
-        *) 
-            echo -e "${GREEN}请在合适的时候手动重启系统${RESET}"
-            ;;
+        [Yy]*) echo -e "${GREEN}系统即将重启...${RESET}"; reboot ;;
+        *) echo -e "${GREEN}已取消，请稍后手动重启${RESET}" ;;
     esac
 }
 
@@ -87,6 +83,7 @@ while true; do
     echo -e "${YELLOW}1) 安装必要工具${RESET}"
     echo -e "${YELLOW}2) V4DD 安装 Windows 10${RESET}"
     echo -e "${YELLOW}3) V6DD 安装 Windows 10${RESET}"
+    echo -e "${YELLOW}4) 重启系统${RESET}"
     echo -e "${YELLOW}0) 退出${RESET}"
     echo -ne "请输入编号: "
     read choice
@@ -94,9 +91,18 @@ while true; do
         1) install_tools ;;
         2) install_v4dd ;;
         3) install_v6dd ;;
+        4) 
+            echo -ne "${YELLOW}确定要立即重启系统吗？(y/N): ${RESET}"
+            read confirm
+            case $confirm in
+                [Yy]*) echo -e "${GREEN}系统即将重启...${RESET}"; reboot ;;
+                *) echo -e "${GREEN}已取消重启${RESET}" ;;
+            esac
+            ;;
         0) exit 0 ;;
         *) echo -e "${RED}无效选项，请重新输入${RESET}" ;;
     esac
     echo -e "\n按回车返回菜单..."
     read
 done
+
