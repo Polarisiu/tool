@@ -40,7 +40,7 @@ while true; do
             ;;
         4)
             echo -e "${GREEN}本地系统快照恢复...${NC}"
-            bash <(curl -fsSL https://raw.githubusercontent.com/Polarisiu/tool/local_restore.sh)
+            bash <(curl -fsSL https://raw.githubusercontent.com/Polarisiu/tool/main/local_restore.sh)
             read -p "$(echo -e ${GREEN}按回车继续...${NC})"
             ;;
         5)
