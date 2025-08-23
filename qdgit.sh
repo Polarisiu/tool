@@ -30,8 +30,12 @@ chmod +x "$SCRIPT_PATH"
 ln -sf "$SCRIPT_PATH" "$BIN_LINK_DIR/s"
 ln -sf "$SCRIPT_PATH" "$BIN_LINK_DIR/S"
 
-echo "✅ 安装/更新完成！"
-echo "你可以使用 's' 或 'S' 命令来启动 VPS <-> GitHub 工具"
+GREEN="\033[32m"
+RED="\033[31m"
+RESET="\033[0m"
+
+echo -e "${GREEN}✅ 安装/更新完成！${RESET}"
+echo -e "${GREEN}你可以使用 '${RED}s${RESET}' 或 '${RED}S${RESET}' 命令来启动 VPS <-> GitHub 工具${RESET}"
 
 # 直接打开菜单
 "$SCRIPT_PATH"
