@@ -4,7 +4,6 @@
 
 GREEN="\033[32m"
 RED="\033[31m"
-YELLOW="\033[33m"
 RESET="\033[0m"
 
 # 获取当前时区
@@ -41,22 +40,22 @@ show_menu() {
     echo -e "${GREEN}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${RESET}"
     echo -e "         🌍 通用时区管理脚本"
     echo -e "${GREEN}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${RESET}"
-    echo -e " 当前时区: ${YELLOW}$(get_timezone)${RESET}"
+    echo -e " 当前时区: ${GREEN}$(get_timezone)${RESET}"
     echo -e ""
-    echo -e " 1) 查看当前时区"
-    echo -e " 2) 设置为 Asia/Shanghai (中国)"
-    echo -e " 3) 设置为 UTC"
-    echo -e " 4) 自定义时区"
-    echo -e " 0) 退出"
+    echo -e "${GREEN} 1) 查看当前时区${RESET}"
+    echo -e "${GREEN} 2) 设置为 Asia/Shanghai (中国)${RESET}"
+    echo -e "${GREEN} 3) 设置为 UTC${RESET}"
+    echo -e "${GREEN} 4) 自定义时区${RESET}"
+    echo -e "${GREEN} 0) 退出${RESET}"
     echo -e "${GREEN}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${RESET}"
 }
 
 while true; do
     show_menu
-    read -p "请输入选项: " choice
+    read -p "$(echo -e ${GREEN}请输入选项: ${RESET})" choice
     case "$choice" in
         1)
-            echo -e "当前时区: ${YELLOW}$(get_timezone)${RESET}"
+            echo -e "当前时区: ${GREEN}$(get_timezone)${RESET}"
             read -p "按回车继续..."
             ;;
         2)
@@ -68,7 +67,7 @@ while true; do
             read -p "按回车继续..."
             ;;
         4)
-            read -p "请输入时区 (例如 Asia/Tokyo): " tz
+            read -p "$(echo -e ${GREEN}请输入时区 (例如 Asia/Tokyo): ${RESET})" tz
             set_timezone "$tz"
             read -p "按回车继续..."
             ;;
