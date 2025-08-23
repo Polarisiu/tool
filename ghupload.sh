@@ -1,15 +1,14 @@
 #!/bin/bash
-# VPS <-> GitHub 工具 (支持多次上传/下载, SSH 自动生成 Key + 上传/下载 + 自动返回菜单)
+# VPS <-> GitHub 工具 (支持多次上传/下载, SSH 自动生成 Key + 上传/下载 + 临时目录保留 + 自动返回菜单)
 
 BASE_DIR="$HOME/ghupload"
 CONFIG_FILE="$BASE_DIR/.ghupload_config"
 LOG_FILE="$BASE_DIR/github_upload.log"
+TMP_BASE="/root/github/tmp"
+UPLOAD_DIR="/root/github/upload"
+DOWNLOAD_DIR="/root/github/download"
 
-BIN_DIR="$HOME/bin"
-INSTALL_PATH_UPPER="$BIN_DIR/G"
-INSTALL_PATH_LOWER="$BIN_DIR/g"
-
-mkdir -p "$BASE_DIR" "$BIN_DIR"
+mkdir -p "$BASE_DIR" "$TMP_BASE" "$UPLOAD_DIR" "$DOWNLOAD_DIR"
 
 GREEN="\033[32m"
 YELLOW="\033[33m"
@@ -19,7 +18,6 @@ RESET="\033[0m"
 REPO_URL=""
 BRANCH="main"
 COMMIT_PREFIX="VPS-Upload"
-UPLOAD_DIR=""
 TG_BOT_TOKEN=""
 TG_CHAT_ID=""
 
@@ -36,7 +34,6 @@ save_config() {
 REPO_URL="$REPO_URL"
 BRANCH="$BRANCH"
 COMMIT_PREFIX="$COMMIT_PREFIX"
-UPLOAD_DIR="$UPLOAD_DIR"
 TG_BOT_TOKEN="$TG_BOT_TOKEN"
 TG_CHAT_ID="$TG_CHAT_ID"
 EOC
@@ -94,12 +91,6 @@ init_config() {
     read -p "请输入提交前缀 (默认 VPS-Upload): " COMMIT_PREFIX
     COMMIT_PREFIX=${COMMIT_PREFIX:-VPS-Upload}
 
-    while true; do
-        read -p "请输入上传目录路径 (绝对路径或相对路径): " UPLOAD_DIR
-        UPLOAD_DIR=$(realpath "$UPLOAD_DIR")
-        [ -d "$UPLOAD_DIR" ] && break || echo -e "${YELLOW}⚠️ 目录不存在，请重新输入${RESET}"
-    done
-
     read -p "是否配置 Telegram Bot 通知？(y/n): " TG_CHOICE
     if [[ "$TG_CHOICE" == "y" ]]; then
         read -p "请输入 TG Bot Token: " TG_BOT_TOKEN
@@ -131,11 +122,6 @@ change_repo() {
 
 upload_files() {
     load_config
-    if [ -z "$UPLOAD_DIR" ] || [ ! -d "$UPLOAD_DIR" ]; then
-        echo -e "${RED}❌ 上传目录未配置或不存在，请先初始化配置${RESET}" | tee -a "$LOG_FILE"
-        read -p "按回车返回菜单..."
-        return
-    fi
 
     shopt -s nullglob
     FILE_LIST=("$UPLOAD_DIR"/*)
@@ -147,21 +133,15 @@ upload_files() {
         return
     fi
 
-    if [ -f "$LOG_FILE" ] && [ $(stat -c%s "$LOG_FILE") -ge 10485760 ]; then
-        tail -n 2000 "$LOG_FILE" > "$LOG_FILE.tmp" && mv "$LOG_FILE.tmp" "$LOG_FILE"
-    fi
-
-    TMP_DIR=$(mktemp -d)
+    TMP_DIR=$(mktemp -d -p "$TMP_BASE")
     echo -e "${GREEN}ℹ️ 正在 clone 仓库...${RESET}"
     git clone -b "$BRANCH" "$REPO_URL" "$TMP_DIR/repo" >>"$LOG_FILE" 2>&1 || {
         echo -e "${RED}❌ Git clone 失败${RESET}" | tee -a "$LOG_FILE"
         send_tg "❌ VPS 上传失败：无法 clone 仓库"
-        rm -rf "$TMP_DIR"
         read -p "按回车返回菜单..."
         return
     }
 
-    # 用 rsync 覆盖文件
     rsync -a --ignore-times "$UPLOAD_DIR"/ "$TMP_DIR/repo/"
 
     cd "$TMP_DIR/repo" || { read -p "按回车返回菜单..."; return; }
@@ -184,31 +164,35 @@ upload_files() {
         echo -e "${RED}❌ 上传失败${RESET}" | tee -a "$LOG_FILE"
         send_tg "❌ VPS 上传失败：git push 出错"
     fi
-    rm -rf "$TMP_DIR"
     read -p "按回车返回菜单..."
 }
 
 download_from_github() {
     load_config
-    read -p "请输入下载目录 (绝对路径): " DOWNLOAD_DIR
-    DOWNLOAD_DIR=$(realpath "$DOWNLOAD_DIR" 2>/dev/null || echo "$DOWNLOAD_DIR")
     mkdir -p "$DOWNLOAD_DIR"
-
-    TMP_DIR=$(mktemp -d)
+    TMP_DIR=$(mktemp -d -p "$TMP_BASE")
     echo -e "${GREEN}ℹ️ 正在从 GitHub 仓库下载完整历史...${RESET}"
 
     if ! git clone -b "$BRANCH" "$REPO_URL" "$TMP_DIR/repo" >>"$LOG_FILE" 2>&1; then
         echo -e "${RED}❌ Git clone 失败，请检查仓库地址和 SSH Key${RESET}" | tee -a "$LOG_FILE"
-        rm -rf "$TMP_DIR"
         read -p "按回车返回菜单..."
         return
     fi
 
-    # rsync --delete 保证下载目录和仓库一致
     rsync -a --delete "$TMP_DIR/repo/" "$DOWNLOAD_DIR/"
-
     echo -e "${GREEN}✅ 下载完成，文件已同步到 $DOWNLOAD_DIR${RESET}" | tee -a "$LOG_FILE"
-    rm -rf "$TMP_DIR"
+    read -p "按回车返回菜单..."
+}
+
+clean_tmp() {
+    echo -e "${GREEN}ℹ️ 临时目录位置: $TMP_BASE${RESET}"
+    read -p "确认清理临时目录及所有子文件吗？(y/n): " confirm
+    if [[ "$confirm" =~ ^[Yy]$ ]]; then
+        rm -rf "$TMP_BASE"/*
+        echo -e "${GREEN}✅ 临时目录已清理${RESET}"
+    else
+        echo -e "${YELLOW}⚠️ 已取消清理${RESET}"
+    fi
     read -p "按回车返回菜单..."
 }
 
@@ -233,7 +217,7 @@ set_cron() {
         7) read -p "请输入自定义 cron 表达式: " cron_expr ;;
         *) echo "无效选项"; read -p "按回车返回菜单..."; return ;;
     esac
-    CRON_CMD="bash $HOME/ghupload/gh_tool.sh upload >> $LOG_FILE 2>&1 #GHUPLOAD"
+    CRON_CMD="bash $BASE_DIR/gh_tool.sh upload >> $LOG_FILE 2>&1 #GHUPLOAD"
     (crontab -l 2>/dev/null | grep -v "#GHUPLOAD"; echo "$cron_expr $CRON_CMD") | crontab -
     echo -e "${GREEN}✅ 定时任务已添加: $cron_expr${RESET}"
     read -p "按回车返回菜单..."
@@ -245,15 +229,14 @@ show_log() {
 }
 
 update_tool() {
-    curl -fsSL "https://raw.githubusercontent.com/iu683/star/main/ghupload.sh" -o "$HOME/ghupload/gh_tool.sh" && chmod +x "$HOME/ghupload/gh_tool.sh"
+    curl -fsSL "https://raw.githubusercontent.com/iu683/star/main/ghupload.sh" -o "$BASE_DIR/gh_tool.sh" && chmod +x "$BASE_DIR/gh_tool.sh"
     echo -e "${GREEN}✅ 脚本已更新${RESET}"
     read -p "按回车返回菜单..."
 }
 
 uninstall_tool() {
     echo -e "${GREEN}ℹ️ 正在卸载 VPS <-> GitHub 工具...${RESET}"
-    rm -rf "$HOME/ghupload"
-    rm -f "$HOME/bin/G" "$HOME/bin/g"
+    rm -rf "$BASE_DIR"
     crontab -l 2>/dev/null | grep -v "#GHUPLOAD" | crontab -
     echo -e "${GREEN}✅ 卸载完成！${RESET}"
     exit 0
@@ -272,6 +255,7 @@ menu() {
     echo -e "${GREEN}6) 修改仓库地址${RESET}"
     echo -e "${GREEN}7) 更新脚本${RESET}"
     echo -e "${GREEN}8) 卸载脚本${RESET}"
+    echo -e "${GREEN}9) 清理临时目录${RESET}"
     echo -e "${GREEN}0) 退出${RESET}"
     read -p "请输入选项: " opt
     case $opt in
@@ -283,6 +267,7 @@ menu() {
         6) change_repo ;;
         7) update_tool ;;
         8) uninstall_tool ;;
+        9) clean_tmp ;;
         0) exit 0 ;;
         *) echo "无效选项"; read -p "按回车返回菜单..." ;;
     esac
