@@ -38,9 +38,9 @@ set_timezone() {
 show_menu() {
     clear
     echo -e "${GREEN}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${RESET}"
-    echo -e "         🌍 通用时区管理脚本"
+    echo -e "${GREEN}         🌍 通用时区管理脚本${RESET}"
     echo -e "${GREEN}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${RESET}"
-    echo -e " 当前时区: ${GREEN}$(get_timezone)${RESET}"
+    echo -e "${GREEN}当前时区: $(get_timezone)${RESET}"
     echo -e ""
     echo -e "${GREEN} 1) 查看当前时区${RESET}"
     echo -e "${GREEN} 2) 设置为 Asia/Shanghai (中国)${RESET}"
