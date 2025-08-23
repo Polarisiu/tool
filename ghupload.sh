@@ -229,18 +229,28 @@ show_log() {
 }
 
 update_tool() {
-    curl -fsSL "https://raw.githubusercontent.com/iu683/star/main/ghupload.sh" -o "$BASE_DIR/gh_tool.sh" && chmod +x "$BASE_DIR/gh_tool.sh"
+    curl -fsSL "https://raw.githubusercontent.com/Polarisiu/tool/main/ghupload.sh" -o "$BASE_DIR/gh_tool.sh" && chmod +x "$BASE_DIR/gh_tool.sh"
     echo -e "${GREEN}✅ 脚本已更新${RESET}"
     read -p "按回车返回菜单..."
 }
 
 uninstall_tool() {
     echo -e "${GREEN}ℹ️ 正在卸载 VPS <-> GitHub 工具...${RESET}"
+    
+    # 删除主目录
     rm -rf "$BASE_DIR"
+    
+    # 删除定时任务
     crontab -l 2>/dev/null | grep -v "#GHUPLOAD" | crontab -
+    
+    # 删除快捷命令
+    rm -f /usr/local/bin/s
+    rm -f /usr/local/bin/S
+    
     echo -e "${GREEN}✅ 卸载完成！${RESET}"
     exit 0
 }
+
 
 menu() {
     clear
