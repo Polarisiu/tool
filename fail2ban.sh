@@ -168,7 +168,15 @@ fail2ban_menu() {
                 if ! command -v fail2ban-client >/dev/null 2>&1; then
                     install_fail2ban
                 else
-                    rc_enable_fail2ban
+                    # 修复 rc_enable_fail2ban 未定义问题
+                    case "$OS_TYPE" in
+                        alpine)
+                            service fail2ban start
+                            ;;
+                        debian|redhat)
+                            systemctl enable --now fail2ban
+                            ;;
+                    esac
                 fi
                 configure_ssh
                 ;;
