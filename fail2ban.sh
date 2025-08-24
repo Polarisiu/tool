@@ -5,7 +5,9 @@ GREEN="\033[32m"
 RED="\033[31m"
 RESET="\033[0m"
 
+# -------------------------
 # 检测系统类型
+# -------------------------
 detect_os() {
     if [[ -f /etc/alpine-release ]]; then
         OS_TYPE="alpine"
@@ -19,43 +21,40 @@ detect_os() {
     fi
 }
 
+# -------------------------
 # 安装 Fail2Ban
+# -------------------------
 install_fail2ban() {
     echo -e "${GREEN}正在安装 Fail2Ban...${RESET}"
     case "$OS_TYPE" in
         alpine)
             apk update
             apk add fail2ban
+            rc-update add fail2ban
+            service fail2ban start
             ;;
         debian)
             apt update
             apt install -y fail2ban curl wget
+            systemctl enable --now fail2ban
             ;;
         redhat)
             yum install -y epel-release
             yum install -y fail2ban curl wget
-            ;;
-    esac
-    rc_enable_fail2ban
-}
-
-# 启用服务
-rc_enable_fail2ban() {
-    case "$OS_TYPE" in
-        alpine)
-            rc-update add fail2ban
-            service fail2ban start
-            ;;
-        debian|redhat)
             systemctl enable --now fail2ban
             ;;
     esac
 }
 
-# 获取日志路径
+# -------------------------
+# 获取 SSH 日志路径
+# -------------------------
 get_log_path() {
     case "$OS_TYPE" in
-        alpine|debian)
+        alpine)
+            LOG_PATH="/var/log/messages"
+            ;;
+        debian)
             LOG_PATH="/var/log/auth.log"
             ;;
         redhat)
@@ -64,13 +63,18 @@ get_log_path() {
     esac
 }
 
+# -------------------------
 # 配置 SSH 防护
+# -------------------------
 configure_ssh() {
     get_log_path
+
     read -p $'\033[32m请输入 SSH 端口（默认22）: \033[0m' SSH_PORT
     SSH_PORT=${SSH_PORT:-22}
+
     read -p $'\033[32m请输入最大失败尝试次数 maxretry（默认5）: \033[0m' MAX_RETRY
     MAX_RETRY=${MAX_RETRY:-5}
+
     read -p $'\033[32m请输入封禁时间 bantime(秒，默认600) : \033[0m' BAN_TIME
     BAN_TIME=${BAN_TIME:-600}
 
@@ -93,10 +97,13 @@ EOF
             systemctl restart fail2ban
             ;;
     esac
+
     echo -e "${GREEN}SSH 防暴力破解配置完成${RESET}"
 }
 
+# -------------------------
 # 卸载 Fail2Ban
+# -------------------------
 uninstall_fail2ban() {
     echo -e "${GREEN}正在卸载 Fail2Ban...${RESET}"
     case "$OS_TYPE" in
@@ -116,7 +123,9 @@ uninstall_fail2ban() {
     echo -e "${GREEN}Fail2Ban 已卸载${RESET}"
 }
 
+# -------------------------
 # 检查 Fail2Ban 是否运行
+# -------------------------
 check_fail2ban() {
     case "$OS_TYPE" in
         alpine)
@@ -134,9 +143,9 @@ check_fail2ban() {
     esac
 }
 
-# -----------------
+# -------------------------
 # 菜单
-# -----------------
+# -------------------------
 fail2ban_menu() {
     while true; do
         clear
@@ -227,8 +236,8 @@ fail2ban_menu() {
     done
 }
 
-# -----------------
+# -------------------------
 # 主逻辑
-# -----------------
+# -------------------------
 detect_os
 fail2ban_menu
