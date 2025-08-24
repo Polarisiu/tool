@@ -1,10 +1,21 @@
 #!/bin/bash
 # 通用时区管理脚本
 # 兼容 systemd (timedatectl) 和 Alpine (OpenRC)
+# 自动在 Alpine 上安装 tzdata
 
 GREEN="\033[32m"
 RED="\033[31m"
 RESET="\033[0m"
+
+# 在 Alpine 上安装 tzdata
+install_tzdata_alpine() {
+    if [[ -f /etc/alpine-release ]]; then
+        if ! apk info | grep -q tzdata; then
+            echo -e "${GREEN}检测到 Alpine，正在安装 tzdata…${RESET}"
+            apk update && apk add tzdata
+        fi
+    fi
+}
 
 # 获取当前时区
 get_timezone() {
@@ -28,6 +39,7 @@ set_timezone() {
         if command -v timedatectl &>/dev/null; then
             timedatectl set-timezone UTC
         elif [[ -f /etc/alpine-release ]]; then
+            install_tzdata_alpine
             echo "UTC" > /etc/timezone
             ln -sf "/usr/share/zoneinfo/UTC" /etc/localtime 2>/dev/null || :
         else
@@ -40,8 +52,13 @@ set_timezone() {
 
     # 检查时区文件是否存在
     if [[ ! -f "/usr/share/zoneinfo/$zone" ]]; then
-        echo -e "${RED}❌ 时区不存在: $zone${RESET}"
-        return 1
+        if [[ -f /etc/alpine-release ]]; then
+            install_tzdata_alpine
+        fi
+        if [[ ! -f "/usr/share/zoneinfo/$zone" ]]; then
+            echo -e "${RED}❌ 时区不存在: $zone${RESET}"
+            return 1
+        fi
     fi
 
     if command -v timedatectl &>/dev/null; then
