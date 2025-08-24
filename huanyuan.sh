@@ -8,7 +8,6 @@ RED='\033[0;31m'
 RESET='\033[0m'
 
 info() { echo -e "${GREEN}[INFO] $1${RESET}"; }
-warn() { echo -e "${YELLOW}[WARN] $1${RESET}"; }
 
 # ================== 系统检测 ==================
 if [ -f /etc/os-release ]; then
@@ -18,13 +17,12 @@ else
     exit 1
 fi
 
-# ================== Alpine 特殊处理 ==================
+# ================== Alpine 主版本号 ==================
 if [ "$ID" = "alpine" ]; then
-    # 获取主版本号，例如 3.22.1 -> 3.22
     ALPINE_VERSION=$(cut -d. -f1-2 /etc/alpine-release)
 fi
 
-# ================== Ubuntu/Debian 获取 codename ==================
+# ================== Ubuntu/Debian codename ==================
 get_codename() {
     if command -v lsb_release >/dev/null 2>&1; then
         codename=$(lsb_release -cs)
@@ -57,54 +55,40 @@ get_codename() {
 get_codename
 
 # ================== 源定义 ==================
+# Ubuntu
 aliyun_ubuntu_source="http://mirrors.aliyun.com/ubuntu/"
 official_ubuntu_source="http://archive.ubuntu.com/ubuntu/"
 
+# Debian
 aliyun_debian_source="http://mirrors.aliyun.com/debian/"
 official_debian_source="http://deb.debian.org/debian/"
+aliyun_debian_security="http://mirrors.aliyun.com/debian-security"
+official_debian_security="http://security.debian.org/debian-security"
 
+# CentOS
 aliyun_centos_source="http://mirrors.aliyun.com/centos/"
 official_centos_source="http://mirror.centos.org/centos/"
 
-# Alpine 源（主版本号自动识别）
+# Alpine
 aliyun_alpine_main="https://mirrors.aliyun.com/alpine/v${ALPINE_VERSION}/main"
 aliyun_alpine_community="https://mirrors.aliyun.com/alpine/v${ALPINE_VERSION}/community"
 official_alpine_main="https://dl-cdn.alpinelinux.org/alpine/v${ALPINE_VERSION}/main"
 official_alpine_community="https://dl-cdn.alpinelinux.org/alpine/v${ALPINE_VERSION}/community"
 
-# ================== 备份源 ==================
-backup_sources() {
-    case "$ID" in
-        ubuntu|debian)
-            cp /etc/apt/sources.list /etc/apt/sources.list.bak
-            ;;
-        centos)
-            cp /etc/yum.repos.d/CentOS-Base.repo /etc/yum.repos.d/CentOS-Base.repo.bak
-            ;;
-        alpine)
-            cp /etc/apk/repositories /etc/apk/repositories.bak
-            ;;
-    esac
-    info "已备份当前更新源"
+# ================== Debian 切换源 ==================
+switch_debian_source() {
+    local mirror="$1"
+    local security="$2"
+    cat >/etc/apt/sources.list <<EOF
+deb ${mirror} ${codename} main contrib non-free
+deb ${mirror} ${codename}-updates main contrib non-free
+deb ${mirror} ${codename}-backports main contrib non-free
+deb ${security} ${codename}-security main contrib non-free
+EOF
+    info "已切换 Debian 源为 $mirror"
 }
 
-# ================== 还原源 ==================
-restore_sources() {
-    case "$ID" in
-        ubuntu|debian)
-            [ -f /etc/apt/sources.list.bak ] && cp /etc/apt/sources.list.bak /etc/apt/sources.list
-            ;;
-        centos)
-            [ -f /etc/yum.repos.d/CentOS-Base.repo.bak ] && cp /etc/yum.repos.d/CentOS-Base.repo.bak /etc/yum.repos.d/CentOS-Base.repo
-            ;;
-        alpine)
-            [ -f /etc/apk/repositories.bak ] && cp /etc/apk/repositories.bak /etc/apk/repositories
-            ;;
-    esac
-    info "已还原初始源"
-}
-
-# ================== 切换源 ==================
+# ================== Ubuntu/CentOS/Alpine 切换函数保持原样 ==================
 switch_apt_source() {
     local new_source="$1"
     local codename="$2"
@@ -130,7 +114,7 @@ $community
 EOF
 }
 
-# ================== 更新缓存 ==================
+# ================== 缓存更新函数保持不变 ==================
 update_cache() {
     case "$ID" in
         ubuntu|debian)
@@ -147,11 +131,6 @@ update_cache() {
             ;;
     esac
     info "缓存更新完成"
-}
-
-# ================== 暂停 ==================
-pause() {
-    read -rp "$(echo -e ${YELLOW}按回车键继续...${RESET})" temp
 }
 
 # ================== 主菜单 ==================
@@ -175,43 +154,46 @@ while true; do
 
     case $choice in
         1)
-            backup_sources
             case "$ID" in
+                debian) switch_debian_source "$aliyun_debian_source" "$aliyun_debian_security" ;;
                 ubuntu) switch_apt_source "$aliyun_ubuntu_source" "$codename" ;;
-                debian) switch_apt_source "$aliyun_debian_source" "$codename" ;;
                 centos) switch_yum_source "$aliyun_centos_source" ;;
                 alpine) switch_apk_source "$aliyun_alpine_main" "$aliyun_alpine_community" ;;
             esac
             update_cache
-            pause
             ;;
         2)
-            backup_sources
             case "$ID" in
+                debian) switch_debian_source "$official_debian_source" "$official_debian_security" ;;
                 ubuntu) switch_apt_source "$official_ubuntu_source" "$codename" ;;
-                debian) switch_apt_source "$official_debian_source" "$codename" ;;
                 centos) switch_yum_source "$official_centos_source" ;;
                 alpine) switch_apk_source "$official_alpine_main" "$official_alpine_community" ;;
             esac
             update_cache
-            pause
             ;;
         3)
-            backup_sources
-            pause
+            case "$ID" in
+                debian|ubuntu) cp /etc/apt/sources.list /etc/apt/sources.list.bak ;;
+                centos) cp /etc/yum.repos.d/CentOS-Base.repo /etc/yum.repos.d/CentOS-Base.repo.bak ;;
+                alpine) cp /etc/apk/repositories /etc/apk/repositories.bak ;;
+            esac
+            info "已备份当前源"
             ;;
         4)
-            restore_sources
+            case "$ID" in
+                debian|ubuntu)
+                    [ -f /etc/apt/sources.list.bak ] && cp /etc/apt/sources.list.bak /etc/apt/sources.list
+                    ;;
+                centos)
+                    [ -f /etc/yum.repos.d/CentOS-Base.repo.bak ] && cp /etc/yum.repos.d/CentOS-Base.repo.bak /etc/yum.repos.d/CentOS-Base.repo
+                    ;;
+                alpine)
+                    [ -f /etc/apk/repositories.bak ] && cp /etc/apk/repositories.bak /etc/apk/repositories
+                    ;;
+            esac
             update_cache
-            pause
             ;;
-        0)
-            echo "退出脚本..."
-            break
-            ;;
-        *)
-            echo -e "${RED}无效选择，请重新输入${RESET}"
-            pause
-            ;;
+        0) break ;;
+        *) info "无效选择" ;;
     esac
 done
