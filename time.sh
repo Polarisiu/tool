@@ -9,7 +9,7 @@ RESET="\033[0m"
 # 获取当前时区
 get_timezone() {
     if command -v timedatectl &>/dev/null; then
-        timedatectl | grep "Time zone" | awk '{print $3}'
+        timedatectl show -p Timezone --value
     elif [[ -f /etc/timezone ]]; then
         cat /etc/timezone
     elif [[ -L /etc/localtime ]]; then
@@ -22,6 +22,12 @@ get_timezone() {
 # 设置时区
 set_timezone() {
     local zone="$1"
+    # 检查时区文件是否存在
+    if [[ ! -f "/usr/share/zoneinfo/$zone" ]]; then
+        echo -e "${RED}❌ 时区不存在: $zone${RESET}"
+        return 1
+    fi
+
     if command -v timedatectl &>/dev/null; then
         timedatectl set-timezone "$zone"
     elif [[ -f /etc/alpine-release ]]; then
@@ -41,7 +47,7 @@ show_menu() {
     echo -e "${GREEN}         🌍 通用时区管理脚本${RESET}"
     echo -e "${GREEN}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${RESET}"
     echo -e "${GREEN}当前时区: $(get_timezone)${RESET}"
-    echo -e ""
+    echo ""
     echo -e "${GREEN} 1) 查看当前时区${RESET}"
     echo -e "${GREEN} 2) 设置为 Asia/Shanghai (中国)${RESET}"
     echo -e "${GREEN} 3) 设置为 UTC${RESET}"
@@ -50,9 +56,10 @@ show_menu() {
     echo -e "${GREEN}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${RESET}"
 }
 
+# 主循环
 while true; do
     show_menu
-    read -p "$(echo -e ${GREEN}请输入选项: ${RESET})" choice
+    read -p "${GREEN}请输入选项: ${RESET}" choice
     case "$choice" in
         1)
             echo -e "当前时区: ${GREEN}$(get_timezone)${RESET}"
@@ -67,7 +74,7 @@ while true; do
             read -p "按回车继续..."
             ;;
         4)
-            read -p "$(echo -e ${GREEN}请输入时区 (例如 Asia/Tokyo): ${RESET})" tz
+            read -p "${GREEN}请输入时区 (例如 Asia/Tokyo): ${RESET}" tz
             set_timezone "$tz"
             read -p "按回车继续..."
             ;;
