@@ -79,20 +79,26 @@ official_alpine_community="https://dl-cdn.alpinelinux.org/alpine/v${ALPINE_VERSI
 switch_debian_source() {
     local mirror="$1"
     local security="$2"
-    cat >/etc/apt/sources.list <<EOF
-# 主仓库
+    if echo "$mirror" | grep -q "aliyun.com"; then
+        # 阿里云没有 backports
+        cat >/etc/apt/sources.list <<EOF
 deb ${mirror} ${codename} main contrib non-free
-# 更新仓库
 deb ${mirror} ${codename}-updates main contrib non-free
-# Backports
-deb ${mirror} ${codename}-backports main contrib non-free
-# 安全更新
 deb ${security} ${codename}-security main contrib non-free
 EOF
+    else
+        # 官方源使用正确 backports 路径
+        cat >/etc/apt/sources.list <<EOF
+deb ${mirror} ${codename} main contrib non-free
+deb ${mirror} ${codename}-updates main contrib non-free
+deb http://deb.debian.org/debian ${codename}-backports main contrib non-free
+deb ${security} ${codename}-security main contrib non-free
+EOF
+    fi
     info "已切换 Debian 源为 $mirror"
 }
 
-# ================== Ubuntu/CentOS/Alpine 切换函数保持原样 ==================
+# ================== Ubuntu/CentOS/Alpine 切换函数 ==================
 switch_apt_source() {
     local new_source="$1"
     local codename="$2"
