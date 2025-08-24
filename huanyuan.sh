@@ -80,9 +80,13 @@ switch_debian_source() {
     local mirror="$1"
     local security="$2"
     cat >/etc/apt/sources.list <<EOF
+# 主仓库
 deb ${mirror} ${codename} main contrib non-free
+# 更新仓库
 deb ${mirror} ${codename}-updates main contrib non-free
+# Backports
 deb ${mirror} ${codename}-backports main contrib non-free
+# 安全更新
 deb ${security} ${codename}-security main contrib non-free
 EOF
     info "已切换 Debian 源为 $mirror"
@@ -114,7 +118,7 @@ $community
 EOF
 }
 
-# ================== 缓存更新函数保持不变 ==================
+# ================== 缓存更新函数 ==================
 update_cache() {
     case "$ID" in
         ubuntu|debian)
