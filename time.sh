@@ -22,6 +22,22 @@ get_timezone() {
 # 设置时区
 set_timezone() {
     local zone="$1"
+
+    # 特殊处理 UTC
+    if [[ "$zone" == "UTC" ]]; then
+        if command -v timedatectl &>/dev/null; then
+            timedatectl set-timezone UTC
+        elif [[ -f /etc/alpine-release ]]; then
+            echo "UTC" > /etc/timezone
+            ln -sf "/usr/share/zoneinfo/UTC" /etc/localtime 2>/dev/null || :
+        else
+            echo -e "${RED}❌ 不支持的系统，请手动设置时区${RESET}"
+            return 1
+        fi
+        echo -e "${GREEN}✅ 时区已设置为 UTC${RESET}"
+        return
+    fi
+
     # 检查时区文件是否存在
     if [[ ! -f "/usr/share/zoneinfo/$zone" ]]; then
         echo -e "${RED}❌ 时区不存在: $zone${RESET}"
