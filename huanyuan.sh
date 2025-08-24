@@ -19,7 +19,42 @@ else
 fi
 
 # ================== Alpine 特殊处理 ==================
-ALPINE_VERSION=$(grep -Eo 'VERSION_ID="[0-9.]+"' /etc/os-release | cut -d'"' -f2)
+if [ "$ID" = "alpine" ]; then
+    # 获取主版本号，例如 3.22.1 -> 3.22
+    ALPINE_VERSION=$(cut -d. -f1-2 /etc/alpine-release)
+fi
+
+# ================== Ubuntu/Debian 获取 codename ==================
+get_codename() {
+    if command -v lsb_release >/dev/null 2>&1; then
+        codename=$(lsb_release -cs)
+    elif [ -n "$VERSION_CODENAME" ]; then
+        codename=$VERSION_CODENAME
+    elif [ -n "$VERSION_ID" ]; then
+        case "$ID" in
+            ubuntu)
+                case "$VERSION_ID" in
+                    "18.04") codename="bionic" ;;
+                    "20.04") codename="focal" ;;
+                    "22.04") codename="jammy" ;;
+                    *) codename="focal" ;;
+                esac
+                ;;
+            debian)
+                case "$VERSION_ID" in
+                    "10") codename="buster" ;;
+                    "11") codename="bullseye" ;;
+                    "12") codename="bookworm" ;;
+                    *) codename="bookworm" ;;
+                esac
+                ;;
+        esac
+    else
+        codename="stable"
+    fi
+}
+
+get_codename
 
 # ================== 源定义 ==================
 aliyun_ubuntu_source="http://mirrors.aliyun.com/ubuntu/"
@@ -31,8 +66,11 @@ official_debian_source="http://deb.debian.org/debian/"
 aliyun_centos_source="http://mirrors.aliyun.com/centos/"
 official_centos_source="http://mirror.centos.org/centos/"
 
-aliyun_alpine_source="https://mirrors.aliyun.com/alpine/v${ALPINE_VERSION}/main"
-official_alpine_source="https://dl-cdn.alpinelinux.org/alpine/v${ALPINE_VERSION}/main"
+# Alpine 源（主版本号自动识别）
+aliyun_alpine_main="https://mirrors.aliyun.com/alpine/v${ALPINE_VERSION}/main"
+aliyun_alpine_community="https://mirrors.aliyun.com/alpine/v${ALPINE_VERSION}/community"
+official_alpine_main="https://dl-cdn.alpinelinux.org/alpine/v${ALPINE_VERSION}/main"
+official_alpine_community="https://dl-cdn.alpinelinux.org/alpine/v${ALPINE_VERSION}/community"
 
 # ================== 备份源 ==================
 backup_sources() {
@@ -84,10 +122,11 @@ switch_yum_source() {
 }
 
 switch_apk_source() {
-    local new_source="$1"
+    local main="$1"
+    local community="$2"
     cat >/etc/apk/repositories <<EOF
-${new_source}
-${new_source%-main}/community
+$main
+$community
 EOF
 }
 
@@ -141,7 +180,7 @@ while true; do
                 ubuntu) switch_apt_source "$aliyun_ubuntu_source" "$codename" ;;
                 debian) switch_apt_source "$aliyun_debian_source" "$codename" ;;
                 centos) switch_yum_source "$aliyun_centos_source" ;;
-                alpine) switch_apk_source "$aliyun_alpine_source" ;;
+                alpine) switch_apk_source "$aliyun_alpine_main" "$aliyun_alpine_community" ;;
             esac
             update_cache
             pause
@@ -152,7 +191,7 @@ while true; do
                 ubuntu) switch_apt_source "$official_ubuntu_source" "$codename" ;;
                 debian) switch_apt_source "$official_debian_source" "$codename" ;;
                 centos) switch_yum_source "$official_centos_source" ;;
-                alpine) switch_apk_source "$official_alpine_source" ;;
+                alpine) switch_apk_source "$official_alpine_main" "$official_alpine_community" ;;
             esac
             update_cache
             pause
