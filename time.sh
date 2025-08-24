@@ -83,7 +83,7 @@ show_menu() {
     echo ""
     echo -e "${GREEN} 1) 查看当前时区${RESET}"
     echo -e "${GREEN} 2) 设置为 Asia/Shanghai (中国)${RESET}"
-    echo -e "${GREEN} 3) 设置为 UTC${RESET}"
+    echo -e "${GREEN} 3) 设置为 America/New_York(US)${RESET}"
     echo -e "${GREEN} 4) 自定义时区${RESET}"
     echo -e "${GREEN} 0) 退出${RESET}"
     echo -e "${GREEN}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${RESET}"
@@ -104,7 +104,7 @@ while true; do
             read -p "按回车继续..."
             ;;
         3)
-            set_timezone "UTC"
+            set_timezone "America/New_York"
             read -p "按回车继续..."
             ;;
         4)
