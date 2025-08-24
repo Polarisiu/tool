@@ -197,7 +197,7 @@ menu() {
         echo -e "${GREEN}15. 清除国家 IP${RESET}"
         echo -e "${GREEN}16. 一键放行常用 Web 端口 (SSH/80/443)${RESET}"
         echo -e "${GREEN}17. 显示防火墙状态及已放行端口${RESET}"
-        echo -e "${GREEN}0. 退出${RESET}"
+        echo -e "${GREEN}0.  退出${RESET}"
         echo -e "${GREEN}============================${RESET}"
         read -p "请输入选择: " choice
 
