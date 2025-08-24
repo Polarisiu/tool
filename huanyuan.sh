@@ -1,28 +1,21 @@
-#!/bin/sh
-set -e
+#!/bin/bash
 
-# ================== 颜色 ==================
+# =========================================
+# 系统更新源切换菜单脚本（Debian 安全源修正 + 自动更新缓存）
+# 支持 Ubuntu / Debian / CentOS
+# =========================================
+
+# 颜色定义
 GREEN='\033[0;32m'
 YELLOW='\033[0;33m'
 RED='\033[0;31m'
+BLUE='\033[0;34m'
 RESET='\033[0m'
 
-info() { echo -e "${GREEN}[INFO] $1${RESET}"; }
+# 获取系统信息
+source /etc/os-release
 
-# ================== 系统检测 ==================
-if [ -f /etc/os-release ]; then
-    . /etc/os-release
-else
-    echo "无法识别系统类型，退出"
-    exit 1
-fi
-
-# ================== Alpine 主版本号 ==================
-if [ "$ID" = "alpine" ]; then
-    ALPINE_VERSION=$(cut -d. -f1-2 /etc/alpine-release)
-fi
-
-# ================== Ubuntu/Debian codename ==================
+# 获取系统 codename（Ubuntu/Debian）
 get_codename() {
     if command -v lsb_release >/dev/null 2>&1; then
         codename=$(lsb_release -cs)
@@ -54,156 +47,171 @@ get_codename() {
 
 get_codename
 
-# ================== 源定义 ==================
-# Ubuntu
+# 定义更新源
 aliyun_ubuntu_source="http://mirrors.aliyun.com/ubuntu/"
 official_ubuntu_source="http://archive.ubuntu.com/ubuntu/"
 
-# Debian
 aliyun_debian_source="http://mirrors.aliyun.com/debian/"
 official_debian_source="http://deb.debian.org/debian/"
-aliyun_debian_security="http://mirrors.aliyun.com/debian-security"
-official_debian_security="http://security.debian.org/debian-security"
 
-# CentOS
 aliyun_centos_source="http://mirrors.aliyun.com/centos/"
 official_centos_source="http://mirror.centos.org/centos/"
 
-# Alpine
-aliyun_alpine_main="https://mirrors.aliyun.com/alpine/v${ALPINE_VERSION}/main"
-aliyun_alpine_community="https://mirrors.aliyun.com/alpine/v${ALPINE_VERSION}/community"
-official_alpine_main="https://dl-cdn.alpinelinux.org/alpine/v${ALPINE_VERSION}/main"
-official_alpine_community="https://dl-cdn.alpinelinux.org/alpine/v${ALPINE_VERSION}/community"
-
-# ================== Debian 切换源 ==================
-switch_debian_source() {
-    local mirror="$1"
-    local security="$2"
-    if echo "$mirror" | grep -q "aliyun.com"; then
-        # 阿里云没有 backports
-        cat >/etc/apt/sources.list <<EOF
-deb ${mirror} ${codename} main contrib non-free
-deb ${mirror} ${codename}-updates main contrib non-free
-deb ${security} ${codename}-security main contrib non-free
-EOF
-    else
-        # 官方源使用正确 backports 路径
-        cat >/etc/apt/sources.list <<EOF
-deb ${mirror} ${codename} main contrib non-free
-deb ${mirror} ${codename}-updates main contrib non-free
-deb http://deb.debian.org/debian ${codename}-backports main contrib non-free
-deb ${security} ${codename}-security main contrib non-free
-EOF
-    fi
-    info "已切换 Debian 源为 $mirror"
+# 备份当前源
+backup_sources() {
+    case "$ID" in
+        ubuntu|debian)
+            cp /etc/apt/sources.list /etc/apt/sources.list.bak
+            ;;
+        centos)
+            cp /etc/yum.repos.d/CentOS-Base.repo /etc/yum.repos.d/CentOS-Base.repo.bak
+            ;;
+    esac
+    echo -e "${GREEN}已备份当前更新源${RESET}"
 }
 
-# ================== Ubuntu/CentOS/Alpine 切换函数 ==================
+# 还原初始源
+restore_sources() {
+    case "$ID" in
+        ubuntu|debian)
+            if [ -f /etc/apt/sources.list.bak ]; then
+                cp /etc/apt/sources.list.bak /etc/apt/sources.list
+                echo -e "${GREEN}已还原初始更新源${RESET}"
+            else
+                echo -e "${RED}备份文件不存在，无法还原${RESET}"
+            fi
+            ;;
+        centos)
+            if [ -f /etc/yum.repos.d/CentOS-Base.repo.bak ]; then
+                cp /etc/yum.repos.d/CentOS-Base.repo.bak /etc/yum.repos.d/CentOS-Base.repo
+                echo -e "${GREEN}已还原初始更新源${RESET}"
+            else
+                echo -e "${RED}备份文件不存在，无法还原${RESET}"
+            fi
+            ;;
+    esac
+}
+
+# 切换 Ubuntu/Debian 源（整文件替换 + Debian 安全源修正）
 switch_apt_source() {
     local new_source="$1"
-    local codename="$2"
-    cat >/etc/apt/sources.list <<EOF
+    local source_name="$2"
+    case "$ID" in
+        ubuntu)
+            cat >/etc/apt/sources.list <<EOF
 deb ${new_source} ${codename} main restricted universe multiverse
 deb ${new_source} ${codename}-updates main restricted universe multiverse
 deb ${new_source} ${codename}-backports main restricted universe multiverse
 deb ${new_source} ${codename}-security main restricted universe multiverse
 EOF
+            ;;
+        debian)
+            cat >/etc/apt/sources.list <<EOF
+deb ${new_source} ${codename} main contrib non-free
+deb ${new_source} ${codename}-updates main contrib non-free
+deb ${new_source} ${codename}-backports main contrib non-free
+deb http://security.debian.org/debian-security ${codename}-security main contrib non-free
+EOF
+            ;;
+    esac
+    echo -e "${GREEN}已切换到 ${source_name} 源（${codename}）${RESET}"
 }
 
+# 切换 CentOS 源
 switch_yum_source() {
     local new_source="$1"
+    local source_name="$2"
     sed -i "s|^baseurl=.*$|baseurl=$new_source|g" /etc/yum.repos.d/CentOS-Base.repo
+    echo -e "${GREEN}已切换到 ${source_name} 源${RESET}"
 }
 
-switch_apk_source() {
-    local main="$1"
-    local community="$2"
-    cat >/etc/apk/repositories <<EOF
-$main
-$community
-EOF
-}
-
-# ================== 缓存更新函数 ==================
+# 更新缓存
 update_cache() {
     case "$ID" in
         ubuntu|debian)
-            info "正在更新 apt 缓存..."
+            echo -e "${YELLOW}正在更新 apt 缓存...${RESET}"
             apt update
             ;;
         centos)
-            info "正在生成 yum 缓存..."
+            echo -e "${YELLOW}正在生成 yum 缓存...${RESET}"
             yum makecache
             ;;
-        alpine)
-            info "正在更新 apk 缓存..."
-            apk update
-            ;;
     esac
-    info "缓存更新完成"
+    echo -e "${GREEN}更新完成${RESET}"
 }
 
-# ================== 主菜单 ==================
+# 暂停函数
+pause() {
+    read -rp "$(echo -e ${YELLOW}按回车键继续...${RESET})" temp
+}
+
+# 主菜单
 while true; do
     clear
-    echo -e "${GREEN}==============================${RESET}"
+    echo -e "${BLUE}==========================="
     case "$ID" in
         ubuntu) echo "Ubuntu 更新源切换菜单" ;;
         debian) echo "Debian 更新源切换菜单" ;;
         centos) echo "CentOS 更新源切换菜单" ;;
-        alpine) echo "Alpine 更新源切换菜单" ;;
     esac
-    echo -e "==============================${RESET}"
-    echo -e "${GREEN}1) 切换到阿里云源并更新缓存${RESET}"
-    echo -e "${GREEN}2) 切换到官方源并更新缓存${RESET}"
-    echo -e "${GREEN}3) 备份当前更新源${RESET}"
-    echo -e "${GREEN}4) 还原初始更新源并更新缓存${RESET}"
-    echo -e "${GREEN}0) 退出${RESET}"
-    echo -e "------------------------------${RESET}"
-    read -rp "$(echo -e ${GREEN}请选择操作: ${RESET})" choice
+    echo -e "===========================${RESET}"
+    echo "1. 切换到阿里云源并更新缓存"
+    echo "2. 切换到官方源并更新缓存"
+    echo "3. 备份当前更新源"
+    echo "4. 还原初始更新源并更新缓存"
+    echo "5. 国内软件源列表(推荐)"
+    echo "6. 国外软件源列表(推荐)"
+    echo "0. 退出"
+    echo "---------------------------"
+    read -rp "请选择操作: " choice
 
     case $choice in
         1)
+            backup_sources
             case "$ID" in
-                debian) switch_debian_source "$aliyun_debian_source" "$aliyun_debian_security" ;;
-                ubuntu) switch_apt_source "$aliyun_ubuntu_source" "$codename" ;;
-                centos) switch_yum_source "$aliyun_centos_source" ;;
-                alpine) switch_apk_source "$aliyun_alpine_main" "$aliyun_alpine_community" ;;
+                ubuntu) switch_apt_source "$aliyun_ubuntu_source" "阿里云" ;;
+                debian) switch_apt_source "$aliyun_debian_source" "阿里云" ;;
+                centos) switch_yum_source "$aliyun_centos_source" "阿里云" ;;
             esac
             update_cache
+            pause
             ;;
         2)
+            backup_sources
             case "$ID" in
-                debian) switch_debian_source "$official_debian_source" "$official_debian_security" ;;
-                ubuntu) switch_apt_source "$official_ubuntu_source" "$codename" ;;
-                centos) switch_yum_source "$official_centos_source" ;;
-                alpine) switch_apk_source "$official_alpine_main" "$official_alpine_community" ;;
+                ubuntu) switch_apt_source "$official_ubuntu_source" "官方" ;;
+                debian) switch_apt_source "$official_debian_source" "官方" ;;
+                centos) switch_yum_source "$official_centos_source" "官方" ;;
             esac
             update_cache
+            pause
             ;;
         3)
-            case "$ID" in
-                debian|ubuntu) cp /etc/apt/sources.list /etc/apt/sources.list.bak ;;
-                centos) cp /etc/yum.repos.d/CentOS-Base.repo /etc/yum.repos.d/CentOS-Base.repo.bak ;;
-                alpine) cp /etc/apk/repositories /etc/apk/repositories.bak ;;
-            esac
-            info "已备份当前源"
+            backup_sources
+            pause
             ;;
         4)
-            case "$ID" in
-                debian|ubuntu)
-                    [ -f /etc/apt/sources.list.bak ] && cp /etc/apt/sources.list.bak /etc/apt/sources.list
-                    ;;
-                centos)
-                    [ -f /etc/yum.repos.d/CentOS-Base.repo.bak ] && cp /etc/yum.repos.d/CentOS-Base.repo.bak /etc/yum.repos.d/CentOS-Base.repo
-                    ;;
-                alpine)
-                    [ -f /etc/apk/repositories.bak ] && cp /etc/apk/repositories.bak /etc/apk/repositories
-                    ;;
-            esac
+            restore_sources
             update_cache
+            pause
             ;;
-        0) break ;;
-        *) info "无效选择" ;;
+        5)
+            clear
+            bash <(curl -sSL https://raw.githubusercontent.com/SuperManito/LinuxMirrors/main/ChangeMirrors.sh)
+            pause
+            ;;
+        6)
+            clear
+            bash <(curl -sSL https://linuxmirrors.cn/main.sh) --abroad
+            pause
+            ;;
+        0)
+            echo "退出脚本..."
+            break
+            ;;
+        *)
+            echo -e "${RED}无效选择，请重新输入${RESET}"
+            pause
+            ;;
     esac
 done
