@@ -40,7 +40,7 @@ set_timezone() {
     echo -e "${GREEN}✅ 时区已设置为 $zone${RESET}"
 }
 
-# 菜单
+# 菜单显示
 show_menu() {
     clear
     echo -e "${GREEN}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${RESET}"
@@ -59,7 +59,8 @@ show_menu() {
 # 主循环
 while true; do
     show_menu
-    read -p "${GREEN}请输入选项: ${RESET}" choice
+    echo -en "${GREEN}请输入选项: ${RESET}"
+    read choice
     case "$choice" in
         1)
             echo -e "当前时区: ${GREEN}$(get_timezone)${RESET}"
@@ -74,7 +75,8 @@ while true; do
             read -p "按回车继续..."
             ;;
         4)
-            read -p "${GREEN}请输入时区 (例如 Asia/Tokyo): ${RESET}" tz
+            echo -en "${GREEN}请输入时区 (例如 Asia/Tokyo): ${RESET}"
+            read tz
             set_timezone "$tz"
             read -p "按回车继续..."
             ;;
