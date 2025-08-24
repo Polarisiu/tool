@@ -2,7 +2,7 @@
 set -e
 
 # ===============================
-# 跨系统防火墙管理脚本（Debian/Ubuntu/Alpine/CentOS/RHEL 双栈 IPv4/IPv6）
+# 防火墙管理脚本（Debian/Ubuntu 双栈 IPv4/IPv6）
 # ===============================
 
 GREEN="\033[32m"
@@ -21,12 +21,7 @@ get_ssh_port() {
 }
 
 save_rules() {
-    if command -v netfilter-persistent >/dev/null 2>&1; then
-        netfilter-persistent save 2>/dev/null || true
-    elif command -v service >/dev/null 2>&1; then
-        service iptables save 2>/dev/null || true
-        service ip6tables save 2>/dev/null || true
-    fi
+    netfilter-persistent save 2>/dev/null || true
 }
 
 init_rules() {
@@ -48,54 +43,59 @@ init_rules() {
         $proto -A INPUT -p tcp --dport 443 -j ACCEPT
     done
     save_rules
+    systemctl enable netfilter-persistent 2>/dev/null || true
 }
 
-# ===============================
-# 系统检测与防火墙安装
-# ===============================
-
 check_installed() {
-    if command -v dpkg >/dev/null 2>&1; then
-        dpkg -l | grep -q iptables-persistent
-    elif command -v apk >/dev/null 2>&1; then
-        command -v iptables >/dev/null
-    elif command -v yum >/dev/null 2>&1 || command -v dnf >/dev/null 2>&1; then
-        rpm -qa | grep -q iptables-services
-    else
-        return 1
-    fi
+    dpkg -l | grep -q iptables-persistent
 }
 
 install_firewall() {
     echo -e "${YELLOW}正在安装防火墙，请稍候...${RESET}"
-
-    if command -v apt >/dev/null 2>&1; then
-        apt update -y
-        apt remove -y ufw iptables-persistent || true
-        apt install -y iptables-persistent xtables-addons-common libtext-csv-xs-perl curl bzip2 unzip || true
-        systemctl enable netfilter-persistent 2>/dev/null || true
-    elif command -v apk >/dev/null 2>&1; then
-        apk update
-        apk add iptables ip6tables xtables-addons curl bzip2 unzip || true
-    elif command -v yum >/dev/null 2>&1 || command -v dnf >/dev/null 2>&1; then
-        PKG_MGR=dnf
-        command -v yum >/dev/null 2>&1 && PKG_MGR=yum
-        $PKG_MGR install -y iptables-services iptables ip6tables xtables-addons curl bzip2 unzip || true
-        systemctl enable iptables
-        systemctl enable ip6tables
-    else
-        echo -e "${RED}❌ 未知系统，无法自动安装防火墙${RESET}"
-        return 1
-    fi
-
+    apt update -y
+    apt remove -y ufw iptables-persistent || true
+    apt install -y iptables-persistent xtables-addons-common libtext-csv-xs-perl curl bzip2 unzip || true
     init_rules
     echo -e "${GREEN}✅ 防火墙安装完成，默认放行 SSH/80/443${RESET}"
-    read -r -p "按回车继续..."
+    read -p "按回车继续..."
 }
 
-# ===============================
-# IP/端口/国家规则操作
-# ===============================
+clear_firewall() {
+    echo -e "${YELLOW}正在清空防火墙规则并放行所有流量...${RESET}"
+    for proto in iptables ip6tables; do
+        $proto -F
+        $proto -X
+        $proto -P INPUT ACCEPT
+        $proto -P FORWARD ACCEPT
+        $proto -P OUTPUT ACCEPT
+    done
+    save_rules
+    systemctl disable netfilter-persistent 2>/dev/null || true
+    echo -e "${GREEN}✅ 防火墙规则已清空，所有流量已放行${RESET}"
+    read -p "按回车继续..."
+}
+
+restore_default_rules() {
+    echo -e "${YELLOW}正在恢复默认防火墙规则 (仅放行 SSH/80/443)...${RESET}"
+    SSH_PORT=$(get_ssh_port)
+    echo -e "${GREEN}检测到 SSH 端口: $SSH_PORT${RESET}"
+    init_rules
+    echo -e "${GREEN}✅ 默认规则已恢复${RESET}"
+    read -p "按回车继续..."
+}
+
+open_web_ports() {
+    SSH_PORT=$(get_ssh_port)
+    echo -e "${YELLOW}正在一键放行 SSH/80/443...${RESET}"
+    for proto in iptables ip6tables; do
+        $proto -I INPUT -p tcp --dport "$SSH_PORT" -j ACCEPT
+        $proto -I INPUT -p tcp --dport 80 -j ACCEPT
+        $proto -I INPUT -p tcp --dport 443 -j ACCEPT
+    done
+    save_rules
+    echo -e "${GREEN}✅ 已放行 SSH/80/443${RESET}"
+    read -p "按回车继续..."
+}
 
 ip_action() {
     local action=$1 ip=$2
@@ -139,6 +139,9 @@ ping_action() {
     done
 }
 
+# -----------------------------
+# 国内镜像下载 GeoIP
+# -----------------------------
 install_geoip() {
     mkdir -p /usr/share/xt_geoip
     cd /usr/share/xt_geoip || return
@@ -168,46 +171,9 @@ manage_country_rules() {
     done
 }
 
-clear_firewall() {
-    echo -e "${YELLOW}正在清空防火墙规则并放行所有流量...${RESET}"
-    for proto in iptables ip6tables; do
-        $proto -F
-        $proto -X
-        $proto -P INPUT ACCEPT
-        $proto -P FORWARD ACCEPT
-        $proto -P OUTPUT ACCEPT
-    done
-    save_rules
-    echo -e "${GREEN}✅ 防火墙规则已清空，所有流量已放行${RESET}"
-    read -r -p "按回车继续..."
-}
-
-restore_default_rules() {
-    echo -e "${YELLOW}正在恢复默认防火墙规则 (仅放行 SSH/80/443)...${RESET}"
-    SSH_PORT=$(get_ssh_port)
-    echo -e "${GREEN}检测到 SSH 端口: $SSH_PORT${RESET}"
-    init_rules
-    echo -e "${GREEN}✅ 默认规则已恢复${RESET}"
-    read -r -p "按回车继续..."
-}
-
-open_web_ports() {
-    SSH_PORT=$(get_ssh_port)
-    echo -e "${YELLOW}正在一键放行 SSH/80/443...${RESET}"
-    for proto in iptables ip6tables; do
-        $proto -I INPUT -p tcp --dport "$SSH_PORT" -j ACCEPT
-        $proto -I INPUT -p tcp --dport 80 -j ACCEPT
-        $proto -I INPUT -p tcp --dport 443 -j ACCEPT
-    done
-    save_rules
-    echo -e "${GREEN}✅ 已放行 SSH/80/443${RESET}"
-    read -r -p "按回车继续..."
-}
-
 # ===============================
 # 菜单
 # ===============================
-
 menu() {
     while true; do
         clear
@@ -233,21 +199,21 @@ menu() {
         echo -e "${GREEN}17. 显示防火墙状态及已放行端口${RESET}"
         echo -e "${GREEN}0. 退出${RESET}"
         echo -e "${GREEN}============================${RESET}"
-        read -r -p "请输入选择: " choice
+        read -p "请输入选择: " choice
 
         case $choice in
             1)
-                read -r -p "请输入要开放的端口号: " PORT
+                read -p "请输入要开放的端口号: " PORT
                 for proto in iptables ip6tables; do
                     $proto -I INPUT -p tcp --dport "$PORT" -j ACCEPT
                     $proto -I INPUT -p udp --dport "$PORT" -j ACCEPT
                 done
                 save_rules
                 echo -e "${GREEN}✅ 已开放端口 $PORT${RESET}"
-                read -r -p "按回车继续..."
+                read -p "按回车继续..."
                 ;;
             2)
-                read -r -p "请输入要关闭的端口号: " PORT
+                read -p "请输入要关闭的端口号: " PORT
                 for proto in iptables ip6tables; do
                     while $proto -C INPUT -p tcp --dport "$PORT" -j ACCEPT 2>/dev/null; do
                         $proto -D INPUT -p tcp --dport "$PORT" -j ACCEPT
@@ -258,37 +224,37 @@ menu() {
                 done
                 save_rules
                 echo -e "${GREEN}✅ 已关闭端口 $PORT${RESET}"
-                read -r -p "按回车继续..."
+                read -p "按回车继续..."
                 ;;
             3) open_web_ports ;;
             4) restore_default_rules ;;
             5)
-                read -r -p "请输入要放行的IP: " IP
+                read -p "请输入要放行的IP: " IP
                 ip_action accept "$IP"
                 save_rules
                 echo -e "${GREEN}✅ IP $IP 已放行${RESET}"
-                read -r -p "按回车继续..."
+                read -p "按回车继续..."
                 ;;
             6)
-                read -r -p "请输入要封禁的IP: " IP
+                read -p "请输入要封禁的IP: " IP
                 ip_action drop "$IP"
                 save_rules
                 echo -e "${GREEN}✅ IP $IP 已封禁${RESET}"
-                read -r -p "按回车继续..."
+                read -p "按回车继续..."
                 ;;
             7)
-                read -r -p "请输入要删除的IP: " IP
+                read -p "请输入要删除的IP: " IP
                 ip_action delete "$IP"
                 save_rules
                 echo -e "${GREEN}✅ IP $IP 已删除${RESET}"
-                read -r -p "按回车继续..."
+                read -p "按回车继续..."
                 ;;
             8)
                 echo "iptables IPv4:"
                 iptables -L -n --line-numbers
                 echo "iptables IPv6:"
                 ip6tables -L -n --line-numbers
-                read -r -p "按回车继续..."
+                read -p "按回车继续..."
                 ;;
             9) clear_firewall ;;
             10) restore_default_rules ;;
@@ -296,34 +262,34 @@ menu() {
                 ping_action allow
                 save_rules
                 echo -e "${GREEN}✅ 已允许 PING（ICMP）${RESET}"
-                read -r -p "按回车继续..."
+                read -p "按回车继续..."
                 ;;
             12)
                 ping_action deny
                 save_rules
                 echo -e "${GREEN}✅ 已禁用 PING（ICMP）${RESET}"
-                read -r -p "按回车继续..."
+                read -p "按回车继续..."
                 ;;
             13)
-                read -r -e -p "请输入阻止的国家代码（如 CN, US, JP）: " CC
+                read -e -p "请输入阻止的国家代码（如 CN, US, JP）: " CC
                 manage_country_rules block "$CC"
                 save_rules
                 echo -e "${GREEN}✅ 已阻止国家 $CC 的 IP${RESET}"
-                read -r -p "按回车继续..."
+                read -p "按回车继续..."
                 ;;
             14)
-                read -r -e -p "请输入允许的国家代码（如 CN, US, JP）: " CC
+                read -e -p "请输入允许的国家代码（如 CN, US, JP）: " CC
                 manage_country_rules allow "$CC"
                 save_rules
                 echo -e "${GREEN}✅ 已允许国家 $CC 的 IP${RESET}"
-                read -r -p "按回车继续..."
+                read -p "按回车继续..."
                 ;;
             15)
-                read -r -e -p "请输入清除的国家代码（如 CN, US, JP）: " CC
+                read -e -p "请输入清除的国家代码（如 CN, US, JP）: " CC
                 manage_country_rules unblock "$CC"
                 save_rules
                 echo -e "${GREEN}✅ 已清除国家 $CC 的 IP 规则${RESET}"
-                read -r -p "按回车继续..."
+                read -p "按回车继续..."
                 ;;
             16) open_web_ports ;;
             17)
@@ -338,10 +304,12 @@ menu() {
                 echo "UDP:"
                 iptables -L INPUT -n | grep ACCEPT | grep udp || echo "无"
                 echo -e "${GREEN}✅ 状态显示完成${RESET}"
-                read -r -p "按回车返回菜单..."
+                # 使用更稳妥的 read
+                read -r -p "按回车返回菜单..." || true
                 ;;
+
             0) break ;;
-            *) echo -e "${RED}无效选择${RESET}"; read -r -p "按回车继续..." ;;
+            *) echo -e "${RED}无效选择${RESET}"; read -p "按回车继续..." ;;
         esac
     done
 }
