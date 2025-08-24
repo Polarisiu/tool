@@ -25,14 +25,14 @@ install_fail2ban() {
     apk add fail2ban rsyslog openssh
 
     # 启用服务
-    rc-update add rsyslog
-    service rsyslog start
+    rc-update add rsyslog default
+    service rsyslog start || true
 
-    rc-update add sshd
-    service sshd start
+    rc-update add sshd default
+    service sshd start || true
 
-    rc-update add fail2ban
-    service fail2ban start
+    rc-update add fail2ban default
+    service fail2ban start || true
 
     # 创建 SSH 日志文件
     [[ ! -f "$LOG_PATH" ]] && touch "$LOG_PATH" && chmod 600 "$LOG_PATH"
@@ -41,13 +41,17 @@ install_fail2ban() {
     if ! grep -q "^SyslogFacility AUTH" /etc/ssh/sshd_config; then
         echo "SyslogFacility AUTH" >> /etc/ssh/sshd_config
         echo "LogLevel INFO" >> /etc/ssh/sshd_config
-        service sshd restart
+        service sshd restart || true
     fi
 
+    # 创建 rsyslog 配置目录（如果不存在）
+    RSYSLOG_DIR="/etc/rsyslog.d"
+    mkdir -p "$RSYSLOG_DIR"
+
     # 配置 rsyslog 写入 auth.log
-    if [[ ! -f /etc/rsyslog.d/50-sshd.conf ]]; then
-        echo "auth,authpriv.*    $LOG_PATH" > /etc/rsyslog.d/50-sshd.conf
-        service rsyslog restart
+    if [[ ! -f "$RSYSLOG_DIR/50-sshd.conf" ]]; then
+        echo "auth,authpriv.*    $LOG_PATH" > "$RSYSLOG_DIR/50-sshd.conf"
+        service rsyslog restart || true
     fi
 
     echo -e "${GREEN}✅ Fail2Ban 已安装并启动${RESET}"
@@ -77,7 +81,7 @@ maxretry = $MAX_RETRY
 bantime  = $BAN_TIME
 EOF
 
-    service fail2ban restart
+    service fail2ban restart || true
     echo -e "${GREEN}✅ SSH 防暴力破解配置完成${RESET}"
 }
 
