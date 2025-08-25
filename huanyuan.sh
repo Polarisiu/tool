@@ -166,19 +166,20 @@ while true; do
     clear
     echo -e "${GREEN}==========================="
     case "$ID" in
-        ubuntu) echo "Ubuntu 更新源切换菜单" ;;
-        debian) echo "Debian 更新源切换菜单" ;;
-        centos) echo "CentOS 更新源切换菜单" ;;
+        ubuntu) echo -e "Ubuntu 更新源切换菜单" ;;
+        debian) echo -e "Debian 更新源切换菜单" ;;
+        centos) echo -e "CentOS 更新源切换菜单" ;;
     esac
-    echo "==========================="
-    echo "1. 切换到阿里云源并更新缓存"
-    echo "2. 切换到官方源并更新缓存"
-    echo "3. 切换到清华源并更新缓存"
-    echo "4. 备份当前更新源"
-    echo "5. 还原初始更新源并更新缓存"
-    echo "6. 国内/国外推荐源列表"
-    echo "0. 退出"
-    echo "---------------------------${RESET}"
+    echo -e "==========================="
+    echo -e "1. 切换到阿里云源并更新缓存"
+    echo -e "2. 切换到官方源并更新缓存"
+    echo -e "3. 切换到清华源并更新缓存"
+    echo -e "4. 备份当前更新源"
+    echo -e "5. 还原初始更新源并更新缓存"
+    echo -e "6. 国内/国外推荐源列表"
+    echo -e "0. 退出"
+    echo -e "---------------------------${RESET}"
+    
     read -rp "$(echo -e "${GREEN}请选择操作: ${RESET}")" choice
 
     case $choice in
