@@ -39,11 +39,11 @@ check_and_install() {
     fi
 }
 
-# 清理重复 APT 源 (特别是 Docker)
+# 清理重复 Docker 源
 fix_duplicate_apt_sources() {
-    echo -e "${YELLOW}🔍 正在检查重复的 APT 源...${RESET}"
+    echo -e "${YELLOW}🔍 正在检查重复的 Docker APT 源...${RESET}"
     local docker_sources
-    docker_sources=$(grep -rl "download.docker.com/linux/ubuntu" /etc/apt/sources.list.d/ 2>/dev/null || true)
+    docker_sources=$(grep -rl "download.docker.com" /etc/apt/sources.list.d/ 2>/dev/null || true)
 
     if [ "$(echo "$docker_sources" | wc -l)" -gt 1 ]; then
         echo -e "${RED}⚠️ 检测到重复的 Docker APT 源:${RESET}"
@@ -56,8 +56,19 @@ fix_duplicate_apt_sources() {
             fi
         done
     else
-        echo -e "${GREEN}✔ 未发现重复 APT 源${RESET}"
+        echo -e "${GREEN}✔ 未发现重复 Docker 源${RESET}"
     fi
+}
+
+# 更新 non-free 组件为 non-free non-free-firmware
+fix_nonfree_firmware() {
+    echo -e "${YELLOW}🔍 正在检查 non-free 组件...${RESET}"
+    local files
+    files=$(grep -rl "non-free" /etc/apt/sources.list /etc/apt/sources.list.d/ 2>/dev/null || true)
+    for f in $files; do
+        sed -i 's/non-free\b/non-free non-free-firmware/g' "$f"
+    done
+    echo -e "${GREEN}✔ non-free 组件已更新为 non-free non-free-firmware${RESET}"
 }
 
 # 系统更新函数
@@ -71,6 +82,7 @@ update_system() {
         case "$ID" in
             debian|ubuntu)
                 fix_duplicate_apt_sources
+                fix_nonfree_firmware
                 apt update && apt upgrade -y
                 check_and_install "dpkg -s" "apt install -y"
                 ;;
@@ -98,12 +110,7 @@ update_system() {
         return 1
     fi
 
-    if [ $? -eq 0 ]; then
-        echo -e "${GREEN}✅ 系统更新和依赖检测/安装完成！${RESET}"
-    else
-        echo -e "${RED}⚠️ 系统更新或依赖安装失败，请检查网络或源配置！${RESET}"
-        return 1
-    fi
+    echo -e "${GREEN}✅ 系统更新和依赖检测/安装完成！${RESET}"
 }
 
 # 执行
