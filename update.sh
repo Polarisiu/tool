@@ -116,5 +116,5 @@ update_system() {
 # 执行
 clear
 update_system
-echo -e "${YELLOW}👉 按回车键结束${RESET}"
-read
+echo -e "${GREEN}✅ 脚本执行完成！${RESET}"
+
