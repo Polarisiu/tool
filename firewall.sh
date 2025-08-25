@@ -205,6 +205,14 @@ menu() {
             1)
                 read -p "请输入要开放的端口号: " PORT
                 for proto in iptables ip6tables; do
+                    # 删除可能存在的 DROP 规则
+                    while $proto -C INPUT -p tcp --dport "$PORT" -j DROP 2>/dev/null; do
+                        $proto -D INPUT -p tcp --dport "$PORT" -j DROP
+                    done
+                    while $proto -C INPUT -p udp --dport "$PORT" -j DROP 2>/dev/null; do
+                        $proto -D INPUT -p udp --dport "$PORT" -j DROP
+                    done
+                    # 插入 ACCEPT
                     $proto -I INPUT -p tcp --dport "$PORT" -j ACCEPT
                     $proto -I INPUT -p udp --dport "$PORT" -j ACCEPT
                 done
@@ -215,12 +223,16 @@ menu() {
             2)
                 read -p "请输入要关闭的端口号: " PORT
                 for proto in iptables ip6tables; do
+                    # 删除可能存在的 ACCEPT 规则
                     while $proto -C INPUT -p tcp --dport "$PORT" -j ACCEPT 2>/dev/null; do
                         $proto -D INPUT -p tcp --dport "$PORT" -j ACCEPT
                     done
                     while $proto -C INPUT -p udp --dport "$PORT" -j ACCEPT 2>/dev/null; do
                         $proto -D INPUT -p udp --dport "$PORT" -j ACCEPT
                     done
+                    # 插入 DROP
+                    $proto -I INPUT -p tcp --dport "$PORT" -j DROP
+                    $proto -I INPUT -p udp --dport "$PORT" -j DROP
                 done
                 save_rules
                 echo -e "${GREEN}✅ 已关闭端口 $PORT${RESET}"
@@ -230,14 +242,28 @@ menu() {
             4) restore_default_rules ;;
             5)
                 read -p "请输入要放行的IP: " IP
-                ip_action accept "$IP"
+                for proto in iptables ip6tables; do
+                    # 删除可能存在的 DROP
+                    while $proto -C INPUT -s "$IP" -j DROP 2>/dev/null; do
+                        $proto -D INPUT -s "$IP" -j DROP
+                    done
+                    # 插入 ACCEPT
+                    $proto -I INPUT -s "$IP" -j ACCEPT
+                done
                 save_rules
                 echo -e "${GREEN}✅ IP $IP 已放行${RESET}"
                 read -p "按回车继续..."
                 ;;
             6)
                 read -p "请输入要封禁的IP: " IP
-                ip_action drop "$IP"
+                for proto in iptables ip6tables; do
+                    # 删除可能存在的 ACCEPT
+                    while $proto -C INPUT -s "$IP" -j ACCEPT 2>/dev/null; do
+                        $proto -D INPUT -s "$IP" -j ACCEPT
+                    done
+                    # 插入 DROP
+                    $proto -I INPUT -s "$IP" -j DROP
+                done
                 save_rules
                 echo -e "${GREEN}✅ IP $IP 已封禁${RESET}"
                 read -p "按回车继续..."
@@ -304,15 +330,14 @@ menu() {
                 echo "UDP:"
                 iptables -L INPUT -n | grep ACCEPT | grep udp || echo "无"
                 echo -e "${GREEN}✅ 状态显示完成${RESET}"
-                # 使用更稳妥的 read
                 read -r -p "按回车返回菜单..." || true
                 ;;
-
             0) break ;;
             *) echo -e "${RED}无效选择${RESET}"; read -p "按回车继续..." ;;
         esac
     done
 }
+
 
 # ===============================
 # 脚本入口
