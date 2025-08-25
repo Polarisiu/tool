@@ -60,15 +60,23 @@ fix_duplicate_apt_sources() {
     fi
 }
 
-# 更新 non-free 组件为 non-free non-free-firmware
-fix_nonfree_firmware() {
-    echo -e "${YELLOW}🔍 正在检查 non-free 组件...${RESET}"
+# 修复 non-free 组件和 backports
+fix_sources_for_version() {
+    echo -e "${YELLOW}🔍 正在检查 sources.list 兼容性...${RESET}"
+    local version="$1"
     local files
-    files=$(grep -rl "non-free" /etc/apt/sources.list /etc/apt/sources.list.d/ 2>/dev/null || true)
+    files=$(grep -rl "deb" /etc/apt/sources.list /etc/apt/sources.list.d/ 2>/dev/null || true)
+
     for f in $files; do
-        sed -i 's/non-free\b/non-free non-free-firmware/g' "$f"
+        # Bullseye 不加 non-free-firmware
+        if [[ "$version" == "bullseye" ]]; then
+            sed -i 's/non-free non-free-firmware/non-free/g' "$f"
+            # 注释掉不存在的 backports
+            sed -i '/bullseye-backports/s/^/##/' "$f"
+        fi
+        # Bookworm 保留 non-free-firmware，不修改
     done
-    echo -e "${GREEN}✔ non-free 组件已更新为 non-free non-free-firmware${RESET}"
+    echo -e "${GREEN}✔ sources.list 已根据系统版本优化${RESET}"
 }
 
 # 系统更新函数
@@ -82,7 +90,7 @@ update_system() {
         case "$ID" in
             debian|ubuntu)
                 fix_duplicate_apt_sources
-                fix_nonfree_firmware
+                fix_sources_for_version "$VERSION_CODENAME"
                 apt update && apt upgrade -y
                 check_and_install "dpkg -s" "apt install -y"
                 ;;
