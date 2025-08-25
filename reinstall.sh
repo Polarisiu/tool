@@ -55,7 +55,7 @@ systems=(
 
 while true; do
     # 显示菜单
-    echo -e "${GREEN}=== 一键系统重装 ===${RESET}"
+    echo -e "${GREEN}=== 一键重装系统管理菜单 ===${RESET}"
 
     last_category=""
     for sys in "${systems[@]}"; do
