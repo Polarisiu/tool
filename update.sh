@@ -18,12 +18,12 @@ fi
 
 # 常用依赖 (包含 sudo)
 deps=(curl wget git net-tools lsof tar unzip rsync pv sudo)
-missing=()
 
-# 通用依赖检测函数
+# 检查并安装依赖
 check_and_install() {
     local check_cmd="$1"
     local install_cmd="$2"
+    local missing=()
 
     for pkg in "${deps[@]}"; do
         if ! eval "$check_cmd \"$pkg\"" &>/dev/null; then
@@ -39,31 +39,52 @@ check_and_install() {
     fi
 }
 
+# 清理重复 APT 源 (特别是 Docker)
+fix_duplicate_apt_sources() {
+    echo -e "${YELLOW}🔍 正在检查重复的 APT 源...${RESET}"
+    local docker_sources
+    docker_sources=$(grep -rl "download.docker.com/linux/ubuntu" /etc/apt/sources.list.d/ 2>/dev/null || true)
+
+    if [ "$(echo "$docker_sources" | wc -l)" -gt 1 ]; then
+        echo -e "${RED}⚠️ 检测到重复的 Docker APT 源:${RESET}"
+        echo "$docker_sources"
+        # 保留 docker.list，删除 archive_uri 开头的
+        for f in $docker_sources; do
+            if [[ "$f" == *"archive_uri"* ]]; then
+                rm -f "$f"
+                echo -e "${GREEN}✔ 已删除多余的源: $f${RESET}"
+            fi
+        done
+    else
+        echo -e "${GREEN}✔ 未发现重复 APT 源${RESET}"
+    fi
+}
+
+# 系统更新函数
 update_system() {
     echo -e "${GREEN}🔄 正在检测系统发行版并执行更新...${RESET}"
 
     if [ -f /etc/os-release ]; then
         . /etc/os-release
+        echo -e "${YELLOW}👉 当前系统: $PRETTY_NAME${RESET}"
+
         case "$ID" in
             debian|ubuntu)
-                echo -e "${YELLOW}👉 检测到 Debian/Ubuntu 系列${RESET}"
+                fix_duplicate_apt_sources
                 apt update && apt upgrade -y
                 check_and_install "dpkg -s" "apt install -y"
                 ;;
             fedora)
-                echo -e "${YELLOW}👉 检测到 Fedora${RESET}"
                 dnf check-update || true
                 dnf upgrade -y
                 check_and_install "rpm -q" "dnf install -y"
                 ;;
             centos|rhel)
-                echo -e "${YELLOW}👉 检测到 CentOS/RHEL${RESET}"
                 yum check-update || true
                 yum upgrade -y
                 check_and_install "rpm -q" "yum install -y"
                 ;;
             alpine)
-                echo -e "${YELLOW}👉 检测到 Alpine Linux${RESET}"
                 apk update && apk upgrade
                 check_and_install "apk info -e" "apk add"
                 ;;
