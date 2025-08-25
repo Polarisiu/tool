@@ -107,12 +107,23 @@ get_cpu_usage(){
 }
 cpu_usage_percent=$(get_cpu_usage)
 
-# ================== 内存信息 ==================
+# ================== 内存与交换 ==================
 mem_total=$(free -m | awk 'NR==2{printf "%.2f", $2/1024}')
 mem_used=$(free -m | awk 'NR==2{printf "%.2f", $3/1024}')
 mem_percent=$(free -m | awk 'NR==2{printf "%.2f", $3*100/$2}')
-
 mem_info="${mem_used}/${mem_total} GB (${mem_percent}%)"
+
+swap_total=$(free -m | awk 'NR==3{print $2}')
+swap_used=$(free -m | awk 'NR==3{print $3}')
+if [ -z "$swap_total" ] || [ "$swap_total" -eq 0 ]; then
+  swap_info="未启用"
+else
+  swap_percent=$((swap_used*100/swap_total))
+  swap_info="${swap_used}MB/${swap_total}MB (${swap_percent}%)"
+fi
+
+# ================== 硬盘占用 ==================
+disk_info=$(df -BG / | awk 'NR==2{printf "%.2f/%.2f GB (%s)", $3, $2, $5}')
 
 
 # ================== 地理位置与ISP ==================
