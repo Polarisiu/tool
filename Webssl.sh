@@ -227,7 +227,7 @@ uninstall_nginx() {
 
 # ================== 菜单 ==================
 while true; do
-  echo -e "${GREEN}====== Nginx 管理脚本 ======${RESET}"
+  echo -e "${GREEN}====== Nginx(WS)管理脚本 ======${RESET}"
   echo -e "${GREEN}1) 安装 Nginx + 反代 + TLS${RESET}"
   echo -e "${GREEN}2) 添加新的反代配置${RESET}"
   echo -e "${GREEN}3) 修改现有配置${RESET}"
