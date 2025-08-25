@@ -113,8 +113,3 @@ update_system() {
     echo -e "${GREEN}✅ 系统更新和依赖安装完成！${RESET}"
 }
 
-# 执行
-clear
-update_system
-echo -e "${YELLOW}👉 按回车键结束${RESET}"
-read
