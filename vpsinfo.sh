@@ -107,9 +107,13 @@ get_cpu_usage(){
 }
 cpu_usage_percent=$(get_cpu_usage)
 
-# ================== 内存与硬盘信息 ==================
-mem_info=$(free -m | awk 'NR==2{printf "%.2f/%.2f MB (%.2f%%)", $3/1024, $2/1024, $3*100/$2}')
-disk_info=$(df -h / | awk 'NR==2{printf "%d/%dGB (%s)", $3,$2,$5}')
+# ================== 内存信息 ==================
+mem_total=$(free -m | awk 'NR==2{printf "%.2f", $2/1024}')
+mem_used=$(free -m | awk 'NR==2{printf "%.2f", $3/1024}')
+mem_percent=$(free -m | awk 'NR==2{printf "%.2f", $3*100/$2}')
+
+mem_info="${mem_used}/${mem_total} GB (${mem_percent}%)"
+
 
 # ================== 地理位置与ISP ==================
 country=$(curl -s --max-time 3 ipinfo.io/country)
