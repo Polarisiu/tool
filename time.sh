@@ -81,11 +81,10 @@ show_menu() {
     echo -e "${GREEN}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${RESET}"
     echo -e "${GREEN}当前时区: $(get_timezone)${RESET}"
     echo ""
-    echo -e "${GREEN} 1) 查看当前时区${RESET}"
-    echo -e "${GREEN} 2) 设置为 Asia/Shanghai (中国)${RESET}"
-    echo -e "${GREEN} 3) 设置为 America/New_York(美国)${RESET}"
-    echo -e "${GREEN} 4) 设置为 Europe/London(英国)${RESET}"
-    echo -e "${GREEN} 5) 自定义时区${RESET}"
+    echo -e "${GREEN} 1) 设置为 Asia/Shanghai (中国)${RESET}"
+    echo -e "${GREEN} 2) 设置为 America/New_York(美国)${RESET}"
+    echo -e "${GREEN} 3) 设置为 Europe/London(英国)${RESET}"
+    echo -e "${GREEN} 4) 自定义时区${RESET}"
     echo -e "${GREEN} 0) 退出${RESET}"
     echo -e "${GREEN}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${RESET}"
 }
@@ -97,22 +96,18 @@ while true; do
     read choice
     case "$choice" in
         1)
-            echo -e "当前时区: ${GREEN}$(get_timezone)${RESET}"
-            read -p "按回车继续..."
-            ;;
-        2)
             set_timezone "Asia/Shanghai"
             read -p "按回车继续..."
             ;;
-        3)
+        2)
             set_timezone "America/New_York"
             read -p "按回车继续..."
             ;;
-        4)
+        3)
             set_timezone "Europe/London"
             read -p "按回车继续..."
             ;;
-        5)
+        4)
             echo -en "${GREEN}请输入时区 (例如 Asia/Tokyo): ${RESET}"
             read tz
             set_timezone "$tz"
