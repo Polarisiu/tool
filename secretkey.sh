@@ -73,7 +73,6 @@ while true; do
     echo -e "${GREEN}2) 禁用 root 密码登录${RESET}"
     echo -e "${GREEN}3) 重启 SSH 服务${RESET}"
     echo -e "${RED}0) 退出${RESET}"
-    echo -n "请选择操作 [0-3]: "
     read -p "$(echo -e ${YELLOW}请选择操作 [0-3]:${RESET}) " choice
 
     case $choice in
