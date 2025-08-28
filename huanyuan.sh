@@ -98,26 +98,27 @@ restore_sources() {
 switch_apt_source() {
     local new_source="$1"
     local source_name="$2"
-    case "$ID" in
-        ubuntu)
-            cat >/etc/apt/sources.list <<EOF
+
+    if [ "$ID" = "debian" ]; then
+        # Debian 不包含 backports
+        cat >/etc/apt/sources.list <<EOF
+deb ${new_source} ${codename} main contrib non-free
+deb ${new_source} ${codename}-updates main contrib non-free
+deb http://security.debian.org/debian-security ${codename}-security main contrib non-free
+EOF
+    elif [ "$ID" = "ubuntu" ]; then
+        # Ubuntu 保留 backports
+        cat >/etc/apt/sources.list <<EOF
 deb ${new_source} ${codename} main restricted universe multiverse
 deb ${new_source} ${codename}-updates main restricted universe multiverse
 deb ${new_source} ${codename}-backports main restricted universe multiverse
 deb ${new_source} ${codename}-security main restricted universe multiverse
 EOF
-            ;;
-        debian)
-            cat >/etc/apt/sources.list <<EOF
-deb ${new_source} ${codename} main contrib non-free
-deb ${new_source} ${codename}-updates main contrib non-free
-deb ${new_source} ${codename}-backports main contrib non-free
-deb http://security.debian.org/debian-security ${codename}-security main contrib non-free
-EOF
-            ;;
-    esac
+    fi
+
     echo -e "${GREEN}已切换到 ${source_name} 源（${codename}）${RESET}"
 }
+
 
 # 切换 CentOS 源（支持多个 repo 区块）
 switch_yum_source() {
