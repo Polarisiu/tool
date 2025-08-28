@@ -54,7 +54,7 @@ install_firewall() {
     echo -e "${YELLOW}正在安装防火墙，请稍候...${RESET}"
     apt update -y
     apt remove -y ufw iptables-persistent || true
-    apt install -y iptables-persistent xtables-addons-common libtext-csv-xs-perl curl bzip2 unzip || true
+    apt install -y iptables-persistent curl || true
     init_rules
     echo -e "${GREEN}✅ 防火墙安装完成，默认放行 SSH/80/443${RESET}"
     read -p "按回车继续..."
@@ -84,92 +84,106 @@ restore_default_rules() {
     read -p "按回车继续..."
 }
 
-open_web_ports() {
-    SSH_PORT=$(get_ssh_port)
-    echo -e "${YELLOW}正在一键放行 SSH/80/443...${RESET}"
+open_all_ports() {
+    echo -e "${YELLOW}正在放行所有端口（IPv4/IPv6）...${RESET}"
+
     for proto in iptables ip6tables; do
-        $proto -I INPUT -p tcp --dport "$SSH_PORT" -j ACCEPT
-        $proto -I INPUT -p tcp --dport 80 -j ACCEPT
-        $proto -I INPUT -p tcp --dport 443 -j ACCEPT
+        # 清空规则
+        $proto -F
+        $proto -X
+
+        # 设置默认策略为 ACCEPT
+        $proto -P INPUT ACCEPT
+        $proto -P FORWARD ACCEPT
+        $proto -P OUTPUT ACCEPT
     done
+
     save_rules
-    echo -e "${GREEN}✅ 已放行 SSH/80/443${RESET}"
+    echo -e "${GREEN}✅ 所有端口已放行（全开放）${RESET}"
     read -p "按回车继续..."
 }
 
+
 ip_action() {
     local action=$1 ip=$2
-    for proto in iptables ip6tables; do
-        case $action in
-            accept)
-                $proto -I INPUT -s "$ip" -j ACCEPT
-                ;;
-            drop)
-                $proto -I INPUT -s "$ip" -j DROP
-                ;;
-            delete)
-                while $proto -C INPUT -s "$ip" -j ACCEPT 2>/dev/null; do
-                    $proto -D INPUT -s "$ip" -j ACCEPT
-                done
-                while $proto -C INPUT -s "$ip" -j DROP 2>/dev/null; do
-                    $proto -D INPUT -s "$ip" -j DROP
-                done
-                ;;
-        esac
-    done
+
+    # 判断 IPv4 还是 IPv6
+    if [[ $ip =~ : ]]; then
+        # IPv6
+        proto="ip6tables"
+    else
+        # IPv4
+        proto="iptables"
+    fi
+
+    case $action in
+        accept)
+            $proto -I INPUT -s "$ip" -j ACCEPT
+            ;;
+        drop)
+            $proto -I INPUT -s "$ip" -j DROP
+            ;;
+        delete)
+            while $proto -C INPUT -s "$ip" -j ACCEPT 2>/dev/null; do
+                $proto -D INPUT -s "$ip" -j ACCEPT
+            done
+            while $proto -C INPUT -s "$ip" -j DROP 2>/dev/null; do
+                $proto -D INPUT -s "$ip" -j DROP
+            done
+            ;;
+    esac
 }
+
 
 ping_action() {
     local action=$1
     for proto in iptables ip6tables; do
         case $action in
             allow)
-                $proto -I INPUT -p icmp --icmp-type echo-request -j ACCEPT 2>/dev/null || true
-                $proto -I OUTPUT -p icmp --icmp-type echo-reply -j ACCEPT 2>/dev/null || true
+                # 先删除 DROP 规则（防止冲突）
+                while $proto -C INPUT -p icmp -j DROP 2>/dev/null; do
+                    $proto -D INPUT -p icmp -j DROP
+                done
+                while $proto -C OUTPUT -p icmp -j DROP 2>/dev/null; do
+                    $proto -D OUTPUT -p icmp -j DROP
+                done
+
+                # 插入允许规则
+                if [ "$proto" = "iptables" ]; then
+                    $proto -I INPUT -p icmp --icmp-type echo-request -j ACCEPT
+                    $proto -I OUTPUT -p icmp --icmp-type echo-reply -j ACCEPT
+                else
+                    $proto -I INPUT -p icmpv6 --icmpv6-type echo-request -j ACCEPT
+                    $proto -I OUTPUT -p icmpv6 --icmpv6-type echo-reply -j ACCEPT
+                fi
                 ;;
             deny)
-                while $proto -C INPUT -p icmp --icmp-type echo-request -j ACCEPT 2>/dev/null; do
-                    $proto -D INPUT -p icmp --icmp-type echo-request -j ACCEPT
-                done
-                while $proto -C OUTPUT -p icmp --icmp-type echo-reply -j ACCEPT 2>/dev/null; do
-                    $proto -D OUTPUT -p icmp --icmp-type echo-reply -j ACCEPT
-                done
+                # 删除已有允许规则
+                if [ "$proto" = "iptables" ]; then
+                    while $proto -C INPUT -p icmp --icmp-type echo-request -j ACCEPT 2>/dev/null; do
+                        $proto -D INPUT -p icmp --icmp-type echo-request -j ACCEPT
+                    done
+                    while $proto -C OUTPUT -p icmp --icmp-type echo-reply -j ACCEPT 2>/dev/null; do
+                        $proto -D OUTPUT -p icmp --icmp-type echo-reply -j ACCEPT
+                    done
+                    # 插入 DROP
+                    $proto -I INPUT -p icmp --icmp-type echo-request -j DROP
+                    $proto -I OUTPUT -p icmp --icmp-type echo-reply -j DROP
+                else
+                    while $proto -C INPUT -p icmpv6 --icmpv6-type echo-request -j ACCEPT 2>/dev/null; do
+                        $proto -D INPUT -p icmpv6 --icmpv6-type echo-request -j ACCEPT
+                    done
+                    while $proto -C OUTPUT -p icmpv6 --icmpv6-type echo-reply -j ACCEPT 2>/dev/null; do
+                        $proto -D OUTPUT -p icmpv6 --icmpv6-type echo-reply -j ACCEPT
+                    done
+                    $proto -I INPUT -p icmpv6 --icmpv6-type echo-request -j DROP
+                    $proto -I OUTPUT -p icmpv6 --icmpv6-type echo-reply -j DROP
+                fi
                 ;;
         esac
     done
 }
 
-# -----------------------------
-# 国内镜像下载 GeoIP
-# -----------------------------
-install_geoip() {
-    mkdir -p /usr/share/xt_geoip
-    cd /usr/share/xt_geoip || return
-    echo -e "${YELLOW}GeoIP 功能可用，但不进行自动更新${RESET}"
-}
-
-manage_country_rules() {
-    local action=$1
-    local country=$2
-    for proto in iptables ip6tables; do
-        case $action in
-            block)
-                $proto -I INPUT -m geoip --src-cc "$country" -j DROP 2>/dev/null || true
-                ;;
-            allow)
-                $proto -I INPUT -m geoip --src-cc "$country" -j ACCEPT 2>/dev/null || true
-                ;;
-            unblock)
-                while $proto -C INPUT -m geoip --src-cc "$country" -j DROP 2>/dev/null; do
-                    $proto -D INPUT -m geoip --src-cc "$country" -j DROP
-                done
-                while $proto -C INPUT -m geoip --src-cc "$country" -j ACCEPT 2>/dev/null; do
-                    $proto -D INPUT -m geoip --src-cc "$country" -j ACCEPT
-                done
-                ;;
-        esac
-    done
-}
 
 # ===============================
 # 菜单
@@ -192,11 +206,7 @@ menu() {
         echo -e "${GREEN}10. 恢复默认安全规则（仅放行 SSH/80/443）${RESET}"
         echo -e "${GREEN}11. 允许 PING（ICMP）${RESET}"
         echo -e "${GREEN}12. 禁用 PING（ICMP）${RESET}"
-        echo -e "${GREEN}13. 阻止国家 IP${RESET}"
-        echo -e "${GREEN}14. 允许国家 IP${RESET}"
-        echo -e "${GREEN}15. 清除国家 IP${RESET}"
-        echo -e "${GREEN}16. 一键放行常用 Web 端口 (SSH/80/443)${RESET}"
-        echo -e "${GREEN}17. 显示防火墙状态及已放行端口${RESET}"
+        echo -e "${GREEN}13. 显示防火墙状态及已放行端口${RESET}"
         echo -e "${GREEN}0.  退出${RESET}"
         echo -e "${GREEN}============================${RESET}"
         read -p "请输入选择: " choice
@@ -205,14 +215,12 @@ menu() {
             1)
                 read -p "请输入要开放的端口号: " PORT
                 for proto in iptables ip6tables; do
-                    # 删除可能存在的 DROP 规则
                     while $proto -C INPUT -p tcp --dport "$PORT" -j DROP 2>/dev/null; do
                         $proto -D INPUT -p tcp --dport "$PORT" -j DROP
                     done
                     while $proto -C INPUT -p udp --dport "$PORT" -j DROP 2>/dev/null; do
                         $proto -D INPUT -p udp --dport "$PORT" -j DROP
                     done
-                    # 插入 ACCEPT
                     $proto -I INPUT -p tcp --dport "$PORT" -j ACCEPT
                     $proto -I INPUT -p udp --dport "$PORT" -j ACCEPT
                 done
@@ -223,14 +231,12 @@ menu() {
             2)
                 read -p "请输入要关闭的端口号: " PORT
                 for proto in iptables ip6tables; do
-                    # 删除可能存在的 ACCEPT 规则
                     while $proto -C INPUT -p tcp --dport "$PORT" -j ACCEPT 2>/dev/null; do
                         $proto -D INPUT -p tcp --dport "$PORT" -j ACCEPT
                     done
                     while $proto -C INPUT -p udp --dport "$PORT" -j ACCEPT 2>/dev/null; do
                         $proto -D INPUT -p udp --dport "$PORT" -j ACCEPT
                     done
-                    # 插入 DROP
                     $proto -I INPUT -p tcp --dport "$PORT" -j DROP
                     $proto -I INPUT -p udp --dport "$PORT" -j DROP
                 done
@@ -238,32 +244,18 @@ menu() {
                 echo -e "${GREEN}✅ 已关闭端口 $PORT${RESET}"
                 read -p "按回车继续..."
                 ;;
-            3) open_web_ports ;;
+            3) open_all_ports ;;
             4) restore_default_rules ;;
             5)
                 read -p "请输入要放行的IP: " IP
-                for proto in iptables ip6tables; do
-                    # 删除可能存在的 DROP
-                    while $proto -C INPUT -s "$IP" -j DROP 2>/dev/null; do
-                        $proto -D INPUT -s "$IP" -j DROP
-                    done
-                    # 插入 ACCEPT
-                    $proto -I INPUT -s "$IP" -j ACCEPT
-                done
+                ip_action accept "$IP"
                 save_rules
                 echo -e "${GREEN}✅ IP $IP 已放行${RESET}"
                 read -p "按回车继续..."
                 ;;
             6)
                 read -p "请输入要封禁的IP: " IP
-                for proto in iptables ip6tables; do
-                    # 删除可能存在的 ACCEPT
-                    while $proto -C INPUT -s "$IP" -j ACCEPT 2>/dev/null; do
-                        $proto -D INPUT -s "$IP" -j ACCEPT
-                    done
-                    # 插入 DROP
-                    $proto -I INPUT -s "$IP" -j DROP
-                done
+                ip_action drop "$IP"
                 save_rules
                 echo -e "${GREEN}✅ IP $IP 已封禁${RESET}"
                 read -p "按回车继续..."
@@ -297,28 +289,6 @@ menu() {
                 read -p "按回车继续..."
                 ;;
             13)
-                read -e -p "请输入阻止的国家代码（如 CN, US, JP）: " CC
-                manage_country_rules block "$CC"
-                save_rules
-                echo -e "${GREEN}✅ 已阻止国家 $CC 的 IP${RESET}"
-                read -p "按回车继续..."
-                ;;
-            14)
-                read -e -p "请输入允许的国家代码（如 CN, US, JP）: " CC
-                manage_country_rules allow "$CC"
-                save_rules
-                echo -e "${GREEN}✅ 已允许国家 $CC 的 IP${RESET}"
-                read -p "按回车继续..."
-                ;;
-            15)
-                read -e -p "请输入清除的国家代码（如 CN, US, JP）: " CC
-                manage_country_rules unblock "$CC"
-                save_rules
-                echo -e "${GREEN}✅ 已清除国家 $CC 的 IP 规则${RESET}"
-                read -p "按回车继续..."
-                ;;
-            16) open_web_ports ;;
-            17)
                 echo -e "${YELLOW}当前防火墙状态:${RESET}"
                 echo "iptables IPv4:"
                 iptables -L -n -v --line-numbers
@@ -344,7 +314,6 @@ menu() {
 # ===============================
 if ! check_installed; then
     install_firewall
-    install_geoip
 fi
 
 menu
