@@ -214,6 +214,12 @@ menu() {
         case $choice in
             1)
                 read -p "请输入要开放的端口号: " PORT
+                # 验证端口是否为数字且在 1-65535 之间
+                if ! [[ "$PORT" =~ ^[0-9]+$ ]] || [ "$PORT" -lt 1 ] || [ "$PORT" -gt 65535 ]; then
+                    echo -e "${RED}❌ 错误：请输入 1-65535 之间的有效端口号${RESET}"
+                    read -p "按回车返回菜单..."
+                    continue
+                fi
                 for proto in iptables ip6tables; do
                     while $proto -C INPUT -p tcp --dport "$PORT" -j DROP 2>/dev/null; do
                         $proto -D INPUT -p tcp --dport "$PORT" -j DROP
@@ -230,6 +236,12 @@ menu() {
                 ;;
             2)
                 read -p "请输入要关闭的端口号: " PORT
+                # 验证端口是否为数字且在 1-65535 之间
+                if ! [[ "$PORT" =~ ^[0-9]+$ ]] || [ "$PORT" -lt 1 ] || [ "$PORT" -gt 65535 ]; then
+                    echo -e "${RED}❌ 错误：请输入 1-65535 之间的有效端口号${RESET}"
+                    read -p "按回车返回菜单..."
+                    continue
+                fi
                 for proto in iptables ip6tables; do
                     while $proto -C INPUT -p tcp --dport "$PORT" -j ACCEPT 2>/dev/null; do
                         $proto -D INPUT -p tcp --dport "$PORT" -j ACCEPT
