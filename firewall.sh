@@ -24,6 +24,14 @@ save_rules() {
     netfilter-persistent save 2>/dev/null || true
 }
 
+save_and_enable_autoload() {
+    save_rules
+    systemctl enable netfilter-persistent 2>/dev/null || true
+    systemctl start netfilter-persistent 2>/dev/null || true
+    echo -e "${GREEN}✅ 规则已保存，并设置为开机自动加载${RESET}"
+    read -p "按回车继续..."
+}
+
 init_rules() {
     SSH_PORT=$(get_ssh_port)
     for proto in iptables ip6tables; do
@@ -44,6 +52,7 @@ init_rules() {
     done
     save_rules
     systemctl enable netfilter-persistent 2>/dev/null || true
+    systemctl start netfilter-persistent 2>/dev/null || true
 }
 
 check_installed() {
@@ -57,6 +66,7 @@ install_firewall() {
     apt install -y iptables-persistent curl || true
     init_rules
     echo -e "${GREEN}✅ 防火墙安装完成，默认放行 SSH/80/443${RESET}"
+    echo -e "${GREEN}✅ 已设置开机自动加载规则${RESET}"
     read -p "按回车继续..."
 }
 
@@ -88,11 +98,8 @@ open_all_ports() {
     echo -e "${YELLOW}正在放行所有端口（IPv4/IPv6）...${RESET}"
 
     for proto in iptables ip6tables; do
-        # 清空规则
         $proto -F
         $proto -X
-
-        # 设置默认策略为 ACCEPT
         $proto -P INPUT ACCEPT
         $proto -P FORWARD ACCEPT
         $proto -P OUTPUT ACCEPT
@@ -103,26 +110,17 @@ open_all_ports() {
     read -p "按回车继续..."
 }
 
-
 ip_action() {
     local action=$1 ip=$2
-
-    # 判断 IPv4 还是 IPv6
     if [[ $ip =~ : ]]; then
-        # IPv6
         proto="ip6tables"
     else
-        # IPv4
         proto="iptables"
     fi
 
     case $action in
-        accept)
-            $proto -I INPUT -s "$ip" -j ACCEPT
-            ;;
-        drop)
-            $proto -I INPUT -s "$ip" -j DROP
-            ;;
+        accept) $proto -I INPUT -s "$ip" -j ACCEPT ;;
+        drop)   $proto -I INPUT -s "$ip" -j DROP ;;
         delete)
             while $proto -C INPUT -s "$ip" -j ACCEPT 2>/dev/null; do
                 $proto -D INPUT -s "$ip" -j ACCEPT
@@ -134,21 +132,17 @@ ip_action() {
     esac
 }
 
-
 ping_action() {
     local action=$1
     for proto in iptables ip6tables; do
         case $action in
             allow)
-                # 先删除 DROP 规则（防止冲突）
                 while $proto -C INPUT -p icmp -j DROP 2>/dev/null; do
                     $proto -D INPUT -p icmp -j DROP
                 done
                 while $proto -C OUTPUT -p icmp -j DROP 2>/dev/null; do
                     $proto -D OUTPUT -p icmp -j DROP
                 done
-
-                # 插入允许规则
                 if [ "$proto" = "iptables" ]; then
                     $proto -I INPUT -p icmp --icmp-type echo-request -j ACCEPT
                     $proto -I OUTPUT -p icmp --icmp-type echo-reply -j ACCEPT
@@ -158,7 +152,6 @@ ping_action() {
                 fi
                 ;;
             deny)
-                # 删除已有允许规则
                 if [ "$proto" = "iptables" ]; then
                     while $proto -C INPUT -p icmp --icmp-type echo-request -j ACCEPT 2>/dev/null; do
                         $proto -D INPUT -p icmp --icmp-type echo-request -j ACCEPT
@@ -166,7 +159,6 @@ ping_action() {
                     while $proto -C OUTPUT -p icmp --icmp-type echo-reply -j ACCEPT 2>/dev/null; do
                         $proto -D OUTPUT -p icmp --icmp-type echo-reply -j ACCEPT
                     done
-                    # 插入 DROP
                     $proto -I INPUT -p icmp --icmp-type echo-request -j DROP
                     $proto -I OUTPUT -p icmp --icmp-type echo-reply -j DROP
                 else
@@ -183,7 +175,6 @@ ping_action() {
         esac
     done
 }
-
 
 # ===============================
 # 菜单
@@ -207,6 +198,7 @@ menu() {
         echo -e "${GREEN}11. 允许 PING（ICMP）${RESET}"
         echo -e "${GREEN}12. 禁用 PING（ICMP）${RESET}"
         echo -e "${GREEN}13. 显示防火墙状态及已放行端口${RESET}"
+        echo -e "${GREEN}14. 保存规则并设置开机自启${RESET}"
         echo -e "${GREEN}0.  退出${RESET}"
         echo -e "${GREEN}============================${RESET}"
         read -p "请输入选择: " choice
@@ -214,7 +206,6 @@ menu() {
         case $choice in
             1)
                 read -p "请输入要开放的端口号: " PORT
-                # 验证端口是否为数字且在 1-65535 之间
                 if ! [[ "$PORT" =~ ^[0-9]+$ ]] || [ "$PORT" -lt 1 ] || [ "$PORT" -gt 65535 ]; then
                     echo -e "${RED}❌ 错误：请输入 1-65535 之间的有效端口号${RESET}"
                     read -p "按回车返回菜单..."
@@ -236,7 +227,6 @@ menu() {
                 ;;
             2)
                 read -p "请输入要关闭的端口号: " PORT
-                # 验证端口是否为数字且在 1-65535 之间
                 if ! [[ "$PORT" =~ ^[0-9]+$ ]] || [ "$PORT" -lt 1 ] || [ "$PORT" -gt 65535 ]; then
                     echo -e "${RED}❌ 错误：请输入 1-65535 之间的有效端口号${RESET}"
                     read -p "按回车返回菜单..."
@@ -314,12 +304,12 @@ menu() {
                 echo -e "${GREEN}✅ 状态显示完成${RESET}"
                 read -r -p "按回车返回菜单..." || true
                 ;;
+            14) save_and_enable_autoload ;;
             0) break ;;
             *) echo -e "${RED}无效选择${RESET}"; read -p "按回车继续..." ;;
         esac
     done
 }
-
 
 # ===============================
 # 脚本入口
