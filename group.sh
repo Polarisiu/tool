@@ -152,9 +152,9 @@ while true; do
                 echo -e "${GREEN}11. 安装IU工具箱${RESET}"
                 echo -e "${GREEN}12. 清理系统${RESET}"
                 echo -e "${GREEN}13. 设置上海时区${RESET}"
-                echo -e "${GREEN}14. 开放所有端口r${RESET}"          
+                echo -e "${GREEN}14. 开放所有端口${RESET}"          
                 echo -e "${GREEN}50. 自定义指令${RESET}"
-                echo -e "${GREEN}0. 返回上级菜单${RESET}"
+                echo -e "${GREEN} 0. 返回上级菜单${RESET}"
                 read -e -p "请选择操作: " task_choice
 
                 case $task_choice in
