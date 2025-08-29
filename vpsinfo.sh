@@ -8,7 +8,7 @@ white="\033[37m"
 re="\033[0m"
 
 # ================== ASCII VPS Logo ==================
-printf -- "${green}"
+printf -- "${red}"
 printf -- " _    __ ____   _____ \n"
 printf -- "| |  / // __ \\ / ___/ \n"
 printf -- "| | / // /_/ / \\__ \\  \n"
