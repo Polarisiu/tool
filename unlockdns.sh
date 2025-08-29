@@ -24,19 +24,25 @@ green="\033[32m"
 reset="\033[0m"
 
 while true; do
-    echo -e "${green}请选择要使用的 DNS 区域（0 返回/退出）：${reset}"
+    echo -e "${green}请选择要使用的 DNS 区域：${reset}"
     count=0
     for region in "${dns_order[@]}"; do
-        printf "${green}%-14s${reset}" "[$((++count))] $region"
+        ((count++))
+        if [[ $count -lt 10 ]]; then
+            printf "${green}[0%d] %-10s${reset}" "$count" "$region"
+        else
+            printf "${green}[%2d] %-10s${reset}" "$count" "$region"
+        fi
         (( count % 2 == 0 )) && echo ""
     done
-    echo -e "\n${green}[0] 返回/退出${reset}\n"
+    echo -e "\n${green}[0 ] 退出${reset}\n"
 
     read -p "$(echo -e ${green}请输入编号:${reset}) " choice
 
+
     # 退出
     if [[ "$choice" == "0" ]]; then
-        echo -e "${green}已返回/退出脚本${reset}"
+        echo -e "${green}退出脚本${reset}"
         exit 0
     fi
 
