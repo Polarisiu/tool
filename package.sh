@@ -155,12 +155,19 @@ show_menu() {
         else
             status="${RED}✖ 未安装${RESET}"
         fi
-        printf "${GREEN}  %2s) %-10s${RESET} %b\n" "$i" "$tool" "$status"
+
+        if [[ $i -lt 10 ]]; then
+            # 小于 10 → 前补零
+            printf "${GREEN} [0%d] %-10s${RESET} %b\n" "$i" "$tool" "$status"
+        else
+            printf "${GREEN} [%2d] %-10s${RESET} %b\n" "$i" "$tool" "$status"
+        fi
     done
-    echo -e "${GREEN}  55) 卸载已安装工具${RESET}"
-    echo -e "${GREEN}   0) 退出${RESET}"
+    echo -e "${GREEN} [55] 卸载已安装工具${RESET}"
+    echo -e "${GREEN} [0 ] 退出${RESET}"
     echo -e "${GREEN}======================================================${RESET}"
 }
+
 
 # ----------------------
 # 卸载函数（支持多选）
