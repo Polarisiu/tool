@@ -69,7 +69,11 @@ fi
 if ! command -v nc >/dev/null 2>&1; then
     echo "安装 nc (netcat)..."
     if [ "$OS_TYPE" = "debian" ]; then
-        apt update -y && apt install -y netcat
+        apt update -y
+        # 自动安装 netcat-openbsd，避免交互
+        if ! dpkg -s netcat-openbsd >/dev/null 2>&1; then
+            apt install -y netcat-openbsd
+        fi
     elif [ "$OS_TYPE" = "rhel" ]; then
         yum install -y nc
     fi
