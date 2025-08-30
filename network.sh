@@ -1,20 +1,20 @@
 #!/bin/bash
 # =========================================
-# VPS 网络信息管理脚本（绿色菜单版）
+# VPS 网络信息管理脚本（绿色菜单版 + 定时任务 + 按回车返回）
 # =========================================
 
 CONFIG_FILE="$HOME/.vps_tg_config"
 OUTPUT_FILE="/tmp/vps_network_info.txt"
 
-# 颜色定义
 GREEN='\033[0;32m'
+RED='\033[0;31m'
+YELLOW='\033[1;33m'
 RESET='\033[0m'
+
+TASK_TAG="#vps_network_task"
 
 # =============================
 # 获取 Telegram 参数
-# =============================
-# =============================
-# 获取 Telegram 参数（带首次提示信息）
 # =============================
 setup_telegram() {
     if [ -f "$CONFIG_FILE" ]; then
@@ -29,9 +29,9 @@ setup_telegram() {
         echo "TG_CHAT_ID=\"$TG_CHAT_ID\"" >> "$CONFIG_FILE"
         chmod 600 "$CONFIG_FILE"
         echo -e "\n配置已保存到 $CONFIG_FILE，下次运行可直接使用，无需重新输入。"
+        read -p "按回车继续..."
     fi
 }
-
 
 # =============================
 # 修改 Telegram 配置
@@ -46,6 +46,7 @@ modify_config() {
     echo "TG_CHAT_ID=\"$TG_CHAT_ID\"" >> "$CONFIG_FILE"
     chmod 600 "$CONFIG_FILE"
     echo "配置已更新。"
+    read -p "按回车返回菜单..."
 }
 
 # =============================
@@ -58,6 +59,7 @@ delete_file() {
     else
         echo "文件 $OUTPUT_FILE 不存在。"
     fi
+    read -p "按回车返回菜单..."
 }
 
 # =============================
@@ -80,7 +82,6 @@ collect_network_info() {
     } > "$OUTPUT_FILE"
 
     echo "=== 网络接口信息 ===" >> "$OUTPUT_FILE"
-
     for IFACE in $(ls /sys/class/net/); do
         DESC="$IFACE"
         [ "$IFACE" = "lo" ] && DESC="$IFACE (回环接口)"
@@ -132,6 +133,7 @@ collect_network_info() {
 send_to_telegram() {
     if [ ! -f "$OUTPUT_FILE" ]; then
         echo "⚠️ 文件 $OUTPUT_FILE 不存在，请先收集网络信息。"
+        read -p "按回车返回菜单..."
         return
     fi
     TG_MSG="📡 VPS 网络信息\n\`\`\`$(cat $OUTPUT_FILE)\`\`\`"
@@ -140,10 +142,84 @@ send_to_telegram() {
         -d parse_mode="Markdown" \
         -d text="$TG_MSG"
     echo "信息已发送到 Telegram。"
+    rm -f "$OUTPUT_FILE"
+    read -p "按回车返回菜单..."
 }
 
 # =============================
-# 菜单主函数（绿色字体）
+# 设置定时任务（稳定版）
+# =============================
+setup_cron() {
+    SCRIPT_PATH="$(readlink -f "$0")"
+
+    while true; do
+        echo -e "${GREEN}===== 定时任务管理 =====${RESET}"
+        echo -e "${GREEN}1) 每天${RESET}"
+        echo -e "${GREEN}2) 每周${RESET}"
+        echo -e "${GREEN}3) 每月${RESET}"
+        echo -e "${GREEN}4) 取消定时任务${RESET}"
+        echo -e "${GREEN}5) 查看当前定时任务${RESET}"
+        echo -e "${GREEN}6) 立即执行一次任务${RESET}"
+        echo -n "请选择操作 [1-6]: "
+        read -r cron_choice
+
+        TMP_CRON=$(mktemp)
+        crontab -l 2>/dev/null > "$TMP_CRON"
+
+        case $cron_choice in
+            1) CRON_TIME="0 0 * * *" ;;
+            2) CRON_TIME="0 0 * * 0" ;;
+            3) CRON_TIME="0 0 1 * *" ;;
+            4)
+                grep -v "$TASK_TAG" "$TMP_CRON" > "$TMP_CRON.tmp"
+                mv "$TMP_CRON.tmp" "$TMP_CRON"
+                crontab "$TMP_CRON"
+                echo -e "${GREEN}定时任务已取消！${RESET}"
+                read -p "按回车返回菜单..."
+                rm -f "$TMP_CRON"
+                return
+                ;;
+            5)
+                echo -e "${GREEN}当前定时任务:${RESET}"
+                grep "$TASK_TAG" "$TMP_CRON" || echo "（没有相关任务）"
+                read -p "按回车返回菜单..."
+                rm -f "$TMP_CRON"
+                return
+                ;;
+            6)
+                echo -e "${GREEN}正在立即执行一次定时任务...${RESET}"
+                setup_telegram
+                collect_network_info
+                send_to_telegram
+                echo -e "${GREEN}✅ 定时任务已立即执行完成${RESET}"
+                read -p "按回车返回菜单..."
+                rm -f "$TMP_CRON"
+                return
+                ;;
+            *)
+                echo -e "${RED}无效选择，返回菜单${RESET}"
+                read -p "按回车返回菜单..."
+                rm -f "$TMP_CRON"
+                return
+                ;;
+        esac
+
+        # 写入 crontab (1-3)
+        grep -v "$TASK_TAG" "$TMP_CRON" > "$TMP_CRON.tmp"
+        mv "$TMP_CRON.tmp" "$TMP_CRON"
+        echo "$CRON_TIME bash \"$SCRIPT_PATH\" --cron >/dev/null 2>&1 $TASK_TAG" >> "$TMP_CRON"
+        crontab "$TMP_CRON"
+        rm -f "$TMP_CRON"
+
+        echo -e "${GREEN}定时任务已设置成功！${RESET}"
+        echo "cron 表达式: $CRON_TIME"
+        read -p "按回车返回菜单..."
+        return
+    done
+}
+
+# =============================
+# 菜单主函数
 # =============================
 menu() {
     while true; do
@@ -152,31 +228,30 @@ menu() {
         echo -e "${GREEN}1) 查看并发送网络信息到 Telegram${RESET}"
         echo -e "${GREEN}2) 修改 Telegram 配置${RESET}"
         echo -e "${GREEN}3) 删除临时文件${RESET}"
-        echo -e "${GREEN}4) 退出${RESET}"
-        echo -ne "${GREEN}请选择操作 [1-4]: ${RESET}"
+        echo -e "${GREEN}4) 设置/取消 定时任务${RESET}"
+        echo -e "${GREEN}5) 退出${RESET}"
+        echo -ne "${GREEN}请选择操作 [1-5]: ${RESET}"
         read -r choice
         case $choice in
-            1)
-                setup_telegram
-                collect_network_info
-                send_to_telegram
-                ;;
-            2)
-                modify_config
-                ;;
-            3)
-                delete_file
-                ;;
-            4)
-                echo "退出脚本。"
-                exit 0
-                ;;
-            *)
-                echo "无效选择，请输入 1-4。"
-                ;;
+            1) setup_telegram; collect_network_info; send_to_telegram ;;
+            2) modify_config ;;
+            3) delete_file ;;
+            4) setup_cron ;;
+            5) echo "退出脚本。"; exit 0 ;;
+            *) echo "无效选择，请输入 1-5。"; read -p "按回车返回菜单..." ;;
         esac
     done
 }
+
+# =============================
+# 支持 --cron 参数，后台执行
+# =============================
+if [ "$1" == "--cron" ]; then
+    setup_telegram
+    collect_network_info
+    send_to_telegram
+    exit 0
+fi
 
 # =============================
 # 启动菜单
