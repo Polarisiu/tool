@@ -74,10 +74,10 @@ server {
         if (\$http_user_agent !~* "(curl|wget|fetch|httpie|Go-http-client|python-requests|bash)") {
             add_header Content-Type text/html;
             return 200 '<!DOCTYPE html>
-<html lang="en">
+<html lang="zh-CN">
 <head>
 <meta charset="UTF-8">
-<title>World Time</title>
+<title>时钟</title>
 <style>
 html, body { margin:0; padding:0; height:100%; display:flex; justify-content:center; align-items:center; background:#f0f0f0; font-family:Arial,sans-serif; flex-direction:column;}
 h1 { font-size:3rem; margin:0;}
@@ -85,12 +85,12 @@ h1 { font-size:3rem; margin:0;}
 </style>
 </head>
 <body>
-<h1>🌎 当前世界时间</h1>
+<h1>🌎 世界时间</h1>
 <div id="time"></div>
 <script>
 function updateTime() {
     const now = new Date();
-    document.getElementById("time").innerText = now.toUTCString();
+    document.getElementById("time").innerText = now.toLocaleString();
 }
 setInterval(updateTime, 1000);
 updateTime();
