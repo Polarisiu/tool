@@ -1,6 +1,6 @@
 #!/bin/bash
 # =========================================
-# 一键部署/管理脚本（Debian/Ubuntu 兼容）
+# 一键部署/管理脚本（Debian/Ubuntu 兼容，IPv4+IPv6 双栈）
 # HTTP 先行，HTTPS 自动申请
 # 支持自动续期 + 防浏览器访问 + DNS 检测 + 访问日志
 # =========================================
@@ -14,7 +14,7 @@ RESET='\033[0m'
 show_menu() {
     clear
     echo -e "${GREEN}=========================================${RESET}"
-    echo -e "${GREEN}            tim 脚本管理菜单             ${RESET}"
+    echo -e "${GREEN}       tim 脚本管理菜单                   ${RESET}"
     echo -e "${GREEN}=========================================${RESET}"
     echo -e "${GREEN}1) 安装/部署脚本${RESET}"
     echo -e "${GREEN}2) 卸载/清除脚本${RESET}"
@@ -35,16 +35,23 @@ install_tim() {
     apt update
     apt install -y nginx curl certbot python3-certbot-nginx dnsutils
 
-    # 检查域名解析
-    VPS_IP=$(curl -s https://ipinfo.io/ip)
-    DOMAIN_IP=$(dig +short "$DOMAIN" | tail -n1)
+    # 检查域名解析 (IPv4 + IPv6)
+    VPS_IPv4=$(curl -s4 https://ifconfig.co || true)
+    VPS_IPv6=$(curl -s6 https://ifconfig.co || true)
+    DOMAIN_A=$(dig +short A "$DOMAIN" | tail -n1)
+    DOMAIN_AAAA=$(dig +short AAAA "$DOMAIN" | tail -n1)
 
-    if [[ "$VPS_IP" != "$DOMAIN_IP" ]]; then
-        echo -e "${RED}❌ 域名 $DOMAIN 没有解析到本 VPS 公网 IP $VPS_IP${RESET}"
+    echo -e "${GREEN}VPS IPv4: $VPS_IPv4${RESET}"
+    echo -e "${GREEN}VPS IPv6: $VPS_IPv6${RESET}"
+    echo -e "${GREEN}域名 A 记录: $DOMAIN_A${RESET}"
+    echo -e "${GREEN}域名 AAAA 记录: $DOMAIN_AAAA${RESET}"
+
+    if [[ "$VPS_IPv4" == "$DOMAIN_A" || "$VPS_IPv6" == "$DOMAIN_AAAA" ]]; then
+        echo -e "${GREEN}✅ 域名解析正确，继续安装${RESET}"
+    else
+        echo -e "${RED}❌ 域名 $DOMAIN 未解析到本 VPS 公网 IP${RESET}"
         echo -e "${RED}请确认 DNS 指向后再运行安装脚本${RESET}"
         return
-    else
-        echo -e "${GREEN}✅ 域名解析正确，继续安装${RESET}"
     fi
 
     # 创建目录
@@ -59,11 +66,12 @@ install_tim() {
         cp "$WEB_ROOT/$DOMAIN" "$LOCAL_DIR/$DOMAIN"
     fi
 
-    # 配置 Nginx HTTP 服务
+    # 配置 Nginx HTTP 服务（双栈）
     NGINX_CONF="/etc/nginx/sites-available/$DOMAIN"
     cat > "$NGINX_CONF" <<EOF
 server {
     listen 80;
+    listen [::]:80;
     server_name $DOMAIN;
 
     root $WEB_ROOT;
@@ -85,7 +93,7 @@ h1 { font-size:3rem; margin:0;}
 </style>
 </head>
 <body>
-<h1>🌎 世界时间</h1>
+<h1>🌎世界时间</h1>
 <div id="time"></div>
 <script>
 function updateTime() {
@@ -129,7 +137,7 @@ EOF
     echo -e "${GREEN}==========================================${RESET}"
     echo -e "${GREEN}部署完成！${RESET}"
     echo -e "${GREEN}本地脚本已保存到：$LOCAL_DIR/$DOMAIN${RESET}"
-    echo -e "${GREEN}HTTPS 已启用 https://$DOMAIN（如证书申请成功）${RESET}"
+    echo -e "${GREEN}HTTPS 已启用 https://$DOMAIN${RESET}"
     echo -e "${GREEN}访问日志：$LOG_FILE${RESET}"
     echo -e "${GREEN}==========================================${RESET}"
 }
@@ -183,12 +191,11 @@ update_tim() {
     echo -e "${GREEN}✅ 更新完成！本地和网页脚本已同步最新版本${RESET}"
 }
 
-
 view_logs() {
     if [ -f "$LOG_FILE" ]; then
         echo -e "${GREEN}显示最近 20 条访问记录：${RESET}"
         tail -n 20 "$LOG_FILE"
-        echo -e "${GREEN}统计不同 IP 访问次数：${RESET}"
+        echo -e "${GREEN}统计不同 IP (IPv4/IPv6) 访问次数：${RESET}"
         awk '{print $1}' "$LOG_FILE" | sort | uniq -c | sort -nr
     else
         echo -e "${RED}日志文件不存在${RESET}"
