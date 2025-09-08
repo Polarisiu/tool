@@ -1,5 +1,5 @@
 #!/bin/bash
-#网站一键部署（Debian/Ubuntu）
+# 网站一键部署（Debian/Ubuntu，双栈 IPv4+IPv6）
 WEB_ROOT="/var/www/clock_site"
 NGINX_CONF_DIR="/etc/nginx/sites-available"
 LOG_FILE="/var/log/nginx/clock_access.log"
@@ -12,13 +12,29 @@ install_site() {
     read -p "请输入你的邮箱（用于 HTTPS）： " EMAIL
 
     apt update
-    apt install -y nginx certbot python3-certbot-nginx
+    apt install -y nginx certbot python3-certbot-nginx dnsutils curl
 
-    # 检查域名解析
-    VPS_IP=$(curl -s https://ipinfo.io/ip)
-    DOMAIN_IP=$(dig +short "$DOMAIN" | tail -n1)
-    if [[ "$VPS_IP" != "$DOMAIN_IP" ]]; then
-        echo -e "${RED}❌ 域名 $DOMAIN 没有解析到本 VPS 公网 IP $VPS_IP${RESET}"
+    # 检查域名解析 (A 和 AAAA)
+    VPS_IPv4=$(curl -s4 https://ifconfig.co || true)
+    VPS_IPv6=$(curl -s6 https://ifconfig.co || true)
+    DOMAIN_A=$(dig +short A "$DOMAIN" | tail -n1)
+    DOMAIN_AAAA=$(dig +short AAAA "$DOMAIN" | tail -n1)
+
+    echo -e "${GREEN}VPS IPv4: $VPS_IPv4${RESET}"
+    echo -e "${GREEN}VPS IPv6: $VPS_IPv6${RESET}"
+    echo -e "${GREEN}域名 A 记录: $DOMAIN_A${RESET}"
+    echo -e "${GREEN}域名 AAAA 记录: $DOMAIN_AAAA${RESET}"
+
+    if [[ -n "$VPS_IPv4" && "$VPS_IPv4" != "$DOMAIN_A" ]]; then
+        echo -e "${RED}❌ A 记录未指向本机 IPv4${RESET}"
+    fi
+    if [[ -n "$VPS_IPv6" && "$VPS_IPv6" != "$DOMAIN_AAAA" ]]; then
+        echo -e "${RED}❌ AAAA 记录未指向本机 IPv6${RESET}"
+    fi
+    if [[ "$VPS_IPv4" == "$DOMAIN_A" || "$VPS_IPv6" == "$DOMAIN_AAAA" ]]; then
+        echo -e "${GREEN}✅ 至少一个解析正确，继续安装${RESET}"
+    else
+        echo -e "${RED}❌ 域名未解析到本机，停止安装${RESET}"
         return
     fi
 
@@ -39,7 +55,7 @@ h1 { font-size:3rem; margin:0;}
 </style>
 </head>
 <body>
-<h1>🌎 世界时间</h1>
+<h1>🌍世界时间</h1>
 <div id="time"></div>
 <script>
 function updateTime() {
@@ -53,11 +69,12 @@ updateTime();
 </html>
 EOF
 
-    # 创建独立 Nginx 配置
+    # Nginx 配置（IPv4 + IPv6）
     NGINX_CONF="$NGINX_CONF_DIR/$DOMAIN"
     cat > "$NGINX_CONF" <<EOF
 server {
     listen 80;
+    listen [::]:80;
     server_name $DOMAIN;
 
     root $WEB_ROOT;
@@ -82,7 +99,7 @@ EOF
     chmod +x "$RENEW_SCRIPT"
     (crontab -l 2>/dev/null; echo "0 0,12 * * * $RENEW_SCRIPT >> /var/log/renew_clock_cert.log 2>&1") | crontab -
 
-    echo -e "${GREEN}✅ HTML网站部署完成！${RESET}"
+    echo -e "${GREEN}✅  HTML网站部署完成！${RESET}"
     echo -e "${GREEN}页面路径：$WEB_ROOT/index.html${RESET}"
     echo -e "${GREEN}访问：https://$DOMAIN${RESET}"
 }
@@ -95,7 +112,7 @@ uninstall_site() {
     rm -rf "$WEB_ROOT"
     certbot delete --cert-name "$DOMAIN" --non-interactive || echo "证书可能不存在"
     systemctl reload nginx
-    echo -e "${GREEN}✅ HTML 时钟网站已卸载${RESET}"
+    echo -e "${GREEN}✅ HTML 时钟网站已卸载（双栈）${RESET}"
 }
 
 edit_html() {
@@ -106,7 +123,7 @@ edit_html() {
 view_logs() {
     if [ -f "$LOG_FILE" ]; then
         tail -n 20 "$LOG_FILE"
-        echo -e "\n统计不同 IP 访问次数："
+        echo -e "\n统计不同 IP (IPv4/IPv6) 访问次数："
         awk '{print $1}' "$LOG_FILE" | sort | uniq -c | sort -nr
     else
         echo -e "${RED}日志文件不存在${RESET}"
@@ -115,7 +132,7 @@ view_logs() {
 
 while true; do
     echo -e "${GREEN}=========================================${RESET}"
-    echo -e "${GREEN}            网站管理菜单                  ${RESET}"
+    echo -e "${GREEN}        网站管理菜单                      ${RESET}"
     echo -e "${GREEN}=========================================${RESET}"
     echo -e "${GREEN}1) 安装/部署网站${RESET}" 
     echo -e "${GREEN}2) 卸载网站${RESET}"
