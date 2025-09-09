@@ -18,9 +18,9 @@ if [ "$(id -u)" -ne 0 ]; then
 fi
 
 # -------------------------
-# 常用依赖
+# 常用依赖（新增 dnsutils，包含 dig）
 # -------------------------
-deps=(curl wget git net-tools lsof tar unzip rsync pv sudo nc)
+deps=(curl wget git net-tools lsof tar unzip rsync pv sudo nc dnsutils)
 
 # -------------------------
 # 检查并安装依赖（兼容不同系统）
