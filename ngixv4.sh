@@ -25,6 +25,13 @@ configure_firewall() {
     done
 }
 
+# 移除系统自带的 default server 配置，避免冲突
+remove_default_server() {
+    echo -e "${YELLOW}清理系统自带的 default server 配置...${RESET}"
+    rm -f /etc/nginx/sites-enabled/default
+    rm -f /etc/nginx/sites-available/default
+}
+
 ensure_nginx_conf() {
     mkdir -p /etc/nginx/sites-available /etc/nginx/sites-enabled /etc/nginx/modules-enabled
     # 创建最小 nginx.conf 避免安装报错
@@ -142,9 +149,45 @@ check_domain_resolution() {
 # ------------------------------
 install_nginx() {
     ensure_nginx_conf
+
+    # 第一次删除系统自带 default 配置
+    remove_default_server
+
+    # 系统更新 & 升级，无交互
+    DEBIAN_FRONTEND=noninteractive apt update
+    DEBIAN_FRONTEND=noninteractive apt upgrade -y \
+        -o Dpkg::Options::="--force-confdef" \
+        -o Dpkg::Options::="--force-confold"
+
+    # 安装依赖工具
+    DEBIAN_FRONTEND=noninteractive apt install -y curl dnsutils \
+        -o Dpkg::Options::="--force-confdef" \
+        -o Dpkg::Options::="--force-confold"
+
+    echo -e "${GREEN}开始安装 Nginx 和 Certbot...${RESET}"
+    if ! DEBIAN_FRONTEND=noninteractive apt install -y \
+        -o Dpkg::Options::="--force-confdef" \
+        -o Dpkg::Options::="--force-confold" \
+        nginx certbot python3-certbot-nginx; then
+        echo -e "${RED}安装失败，尝试自动修复...${RESET}"
+        uninstall_nginx
+        echo -e "${YELLOW}重新尝试安装...${RESET}"
+        DEBIAN_FRONTEND=noninteractive apt install -y \
+            -o Dpkg::Options::="--force-confdef" \
+            -o Dpkg::Options::="--force-confold" \
+            nginx certbot python3-certbot-nginx || {
+            echo -e "${RED}修复后安装仍然失败，请手动检查系统环境！${RESET}"
+            pause
+            return
+        }
+    fi
+
+    # 第二次删除系统自带 default 配置（升级/安装可能恢复的）
+    remove_default_server
+
+    # 创建自定义 default_server_block
     create_default_server
-    apt update && apt upgrade -y
-    apt install -y nginx certbot python3-certbot-nginx
+
     configure_firewall
     systemctl daemon-reload
     systemctl enable --now nginx
@@ -216,10 +259,12 @@ check_cert() {
 }
 
 uninstall_nginx() {
+    echo -e "${YELLOW}卸载 Nginx 和相关组件...${RESET}"
     systemctl stop nginx || true
-    apt purge -y nginx certbot python3-certbot-nginx
+    apt purge -y nginx nginx-common nginx-core certbot python3-certbot-nginx || true
     apt autoremove -y
     rm -rf /etc/nginx /etc/letsencrypt
+    remove_default_server
     echo -e "${GREEN}Nginx 和 Certbot 已卸载${RESET}"
     pause
 }
