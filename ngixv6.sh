@@ -22,11 +22,15 @@ configure_firewall() {
     done
 }
 
+# 删除系统自带 default 配置
+remove_default_server() {
+    echo -e "${YELLOW}清理系统自带 default 配置...${RESET}"
+    rm -f /etc/nginx/sites-enabled/default
+    rm -f /etc/nginx/sites-available/default
+}
+
 ensure_nginx_conf() {
     mkdir -p /etc/nginx/sites-available /etc/nginx/sites-enabled /etc/nginx/modules-enabled
-
-    # 删除系统自带 default 配置，避免重复监听
-    rm -f /etc/nginx/sites-enabled/default /etc/nginx/sites-available/default
 
     # nginx.conf
     if [ ! -f /etc/nginx/nginx.conf ]; then
@@ -158,13 +162,42 @@ check_domain_resolution() {
 
 install_nginx() {
     ensure_nginx_conf
-    create_default_server
-    fix_duplicate_default_server
 
-    export DEBIAN_FRONTEND=noninteractive
-    apt update
-    apt upgrade -y -o Dpkg::Options::="--force-confdef" -o Dpkg::Options::="--force-confold"
-    apt install -y -o Dpkg::Options::="--force-confdef" -o Dpkg::Options::="--force-confold" nginx certbot python3-certbot-nginx dnsutils curl
+    # 第一次删除系统自带 default 配置
+    remove_default_server
+
+    # 系统更新 & 安装依赖
+    DEBIAN_FRONTEND=noninteractive apt update
+    DEBIAN_FRONTEND=noninteractive apt upgrade -y \
+        -o Dpkg::Options::="--force-confdef" \
+        -o Dpkg::Options::="--force-confold"
+    DEBIAN_FRONTEND=noninteractive apt install -y curl dnsutils \
+        -o Dpkg::Options::="--force-confdef" \
+        -o Dpkg::Options::="--force-confold"
+
+    echo -e "${GREEN}开始安装 Nginx 和 Certbot...${RESET}"
+    if ! DEBIAN_FRONTEND=noninteractive apt install -y \
+        -o Dpkg::Options::="--force-confdef" \
+        -o Dpkg::Options::="--force-confold" \
+        nginx certbot python3-certbot-nginx; then
+        echo -e "${RED}安装失败，尝试自动修复...${RESET}"
+        uninstall_nginx
+        echo -e "${YELLOW}重新尝试安装...${RESET}"
+        DEBIAN_FRONTEND=noninteractive apt install -y \
+            -o Dpkg::Options::="--force-confdef" \
+            -o Dpkg::Options::="--force-confold" \
+            nginx certbot python3-certbot-nginx || {
+            echo -e "${RED}修复后安装仍然失败，请手动检查系统环境！${RESET}"
+            pause
+            return
+        }
+    fi
+
+    # 第二次删除系统自带 default 配置（升级/安装可能恢复的）
+    remove_default_server
+
+    # 创建自定义 default_server_block
+    create_default_server
 
     configure_firewall
     systemctl daemon-reload
@@ -173,10 +206,10 @@ install_nginx() {
     echo -ne "${GREEN}请输入邮箱地址: ${RESET}"; read EMAIL
     echo -ne "${GREEN}请输入域名: ${RESET}"; read DOMAIN
     check_domain_resolution "$DOMAIN"
-    echo -ne "${GREEN}请输入反代目标 (例如 http://[::1]:8080): ${RESET}"; read TARGET
+    echo -ne "${GREEN}请输入反代目标: ${RESET}"; read TARGET
     echo -ne "${GREEN}是否为 WebSocket 反代? (y/n): ${RESET}"; read IS_WS
 
-    certbot certonly --nginx -d "$DOMAIN" --non-interactive --agree-tos -m "$EMAIL" --redirect
+    certbot certonly --nginx -d "$DOMAIN" --non-interactive --agree-tos -m "$EMAIL"
     generate_server_config "$DOMAIN" "$TARGET" "$IS_WS"
 
     nginx -t && systemctl reload nginx
@@ -190,13 +223,13 @@ add_config() {
 
     echo -ne "${GREEN}请输入域名: ${RESET}"; read DOMAIN
     check_domain_resolution "$DOMAIN"
-    echo -ne "${GREEN}请输入反代目标 (例如 http://[::1]:8080): ${RESET}"; read TARGET
+    echo -ne "${GREEN}请输入反代目标: ${RESET}"; read TARGET
     echo -ne "${GREEN}请输入邮箱地址: ${RESET}"; read EMAIL
     echo -ne "${GREEN}是否为 WebSocket 反代? (y/n): ${RESET}"; read IS_WS
 
     [ -f "/etc/nginx/sites-available/$DOMAIN" ] && echo -e "${YELLOW}配置已存在${RESET}" && pause && return
 
-    certbot certonly --nginx -d "$DOMAIN" --non-interactive --agree-tos -m "$EMAIL" --redirect
+    certbot certonly --nginx -d "$DOMAIN" --non-interactive --agree-tos -m "$EMAIL"
     generate_server_config "$DOMAIN" "$TARGET" "$IS_WS"
 
     nginx -t && systemctl reload nginx
@@ -217,7 +250,7 @@ modify_config() {
     echo -ne "${GREEN}是否更新邮箱? (y/n): ${RESET}"; read choice
     if [[ "$choice" == "y" ]]; then
         echo -ne "${GREEN}新邮箱: ${RESET}"; read EMAIL
-        certbot certonly --nginx -d "$DOMAIN" --non-interactive --agree-tos -m "$EMAIL" --redirect
+        certbot certonly --nginx -d "$DOMAIN" --non-interactive --agree-tos -m "$EMAIL"
     fi
 
     generate_server_config "$DOMAIN" "$TARGET" "$IS_WS"
