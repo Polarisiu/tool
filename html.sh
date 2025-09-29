@@ -134,18 +134,18 @@ while true; do
     echo -e "${GREEN}=========================================${RESET}"
     echo -e "${GREEN}        网站管理菜单                      ${RESET}"
     echo -e "${GREEN}=========================================${RESET}"
-    echo -e "${GREEN}1) 安装/部署网站${RESET}" 
+    echo -e "${GREEN}1) 部署网站${RESET}" 
     echo -e "${GREEN}2) 卸载网站${RESET}"
     echo -e "${GREEN}3) 编辑页面${RESET}"
     echo -e "${GREEN}4) 查看访问日志${RESET}"
-    echo -e "${GREEN}5) 退出${RESET}"
-    read -p "请选择操作 [1-5]：" choice
+    echo -e "${GREEN}0) 退出${RESET}"
+    read -p "请选择操作：" choice
     case $choice in
         1) install_site ;;
         2) uninstall_site ;;
         3) edit_html ;;
         4) view_logs ;;
-        5) exit 0 ;;
+        0) exit 0 ;;
         *) echo -e "${RED}请输入有效选项 [1-5]${RESET}" ;;
     esac
     read -p "按回车返回菜单..."
