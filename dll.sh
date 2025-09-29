@@ -20,7 +20,7 @@ show_menu() {
     echo -e "${GREEN}2) 卸载脚本${RESET}"
     echo -e "${GREEN}3) 更新脚本${RESET}"
     echo -e "${GREEN}4) 查看访问日志${RESET}"
-    echo -e "${GREEN}5) 退出${RESET}"
+    echo -e "${GREEN}0) 退出${RESET}"
     echo -e "${GREEN}=========================================${RESET}"
 }
 
@@ -204,13 +204,13 @@ view_logs() {
 
 while true; do
     show_menu
-    read -p "请选择操作 [1-5]：" choice
+    read -p "请选择操作：" choice
     case $choice in
         1) install_tim ;;
         2) uninstall_tim ;;
         3) update_tim ;;
         4) view_logs ;;
-        5) exit 0 ;;
+        0) exit 0 ;;
         *) echo -e "${RED}请输入有效选项 [1-5]${RESET}" ;;
     esac
     read -p "按回车返回菜单..."
