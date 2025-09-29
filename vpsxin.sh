@@ -7,8 +7,18 @@ red="\033[31m"
 white="\033[37m"
 re="\033[0m"
 
-# ================== 配置文件 ==================
-TG_CONFIG_FILE="$HOME/.vps_tg_config"
+# ================== 基础配置 ==================
+SCRIPT_PATH="/opt/vpsx/vpsxin.sh"
+TG_CONFIG_FILE="/opt/vpsx/.vps_tg_config"
+SCRIPT_URL="https://raw.githubusercontent.com/Polarisiu/tool/main/vpsxin.sh"
+
+# ================== 下载或更新脚本 ==================
+download_script(){
+    mkdir -p "$(dirname "$SCRIPT_PATH")"
+    curl -sSL "$SCRIPT_URL" -o "$SCRIPT_PATH"
+    chmod +x "$SCRIPT_PATH"
+    echo -e "${green}✅ 脚本已保存到 $SCRIPT_PATH${re}"
+}
 
 # ================== ASCII VPS Logo ==================
 printf -- "${red}"
@@ -40,7 +50,6 @@ install_deps(){
   local deps=("curl" "vnstat" "bc")
   local missing=()
 
-  # 检查 lsb_release 或 redhat-lsb-core
   if ! command -v lsb_release >/dev/null 2>&1; then
     if command -v apt >/dev/null 2>&1 || command -v zypper >/dev/null 2>&1 || command -v apk >/dev/null 2>&1 || command -v pacman >/dev/null 2>&1; then
       deps+=("lsb-release")
@@ -49,14 +58,12 @@ install_deps(){
     fi
   fi
 
-  # 检查缺少的依赖
   for pkg in "${deps[@]}"; do
     if ! command -v "$pkg" >/dev/null 2>&1; then
       missing+=("$pkg")
     fi
   done
 
-  # 如果没有缺失，直接返回
   if [ ${#missing[@]} -eq 0 ]; then
     return
   fi
@@ -81,8 +88,6 @@ install_deps(){
     echo -e "${red}❌ 未检测到支持的包管理器，请手动安装: ${missing[*]}${re}"
   fi
 }
-
-
 
 # ================== 公网IP ==================
 get_ip_info(){
@@ -212,31 +217,42 @@ EOF
 
 # ================== Telegram 配置 ==================
 setup_telegram(){
-  if [ -f "$TG_CONFIG_FILE" ]; then
-    source "$TG_CONFIG_FILE"
-  else
-    echo "第一次运行，需要配置 Telegram 参数"
-    echo "请输入 Telegram Bot Token:"
-    read -r TG_BOT_TOKEN
-    echo "请输入 Telegram Chat ID:"
-    read -r TG_CHAT_ID
-    echo "TG_BOT_TOKEN=\"$TG_BOT_TOKEN\"" > "$TG_CONFIG_FILE"
-    echo "TG_CHAT_ID=\"$TG_CHAT_ID\"" >> "$TG_CONFIG_FILE"
-    chmod 600 "$TG_CONFIG_FILE"
-    echo -e "\n配置已保存到 $TG_CONFIG_FILE，下次运行可直接使用。"
-  fi
+  mkdir -p "$(dirname "$TG_CONFIG_FILE")"
+  echo "第一次运行或缺少配置文件，需要配置 Telegram 参数"
+  echo "请输入 Telegram Bot Token:"
+  read -r TG_BOT_TOKEN
+  echo "请输入 Telegram Chat ID:"
+  read -r TG_CHAT_ID
+  echo "TG_BOT_TOKEN=\"$TG_BOT_TOKEN\"" > "$TG_CONFIG_FILE"
+  echo "TG_CHAT_ID=\"$TG_CHAT_ID\"" >> "$TG_CONFIG_FILE"
+  chmod 600 "$TG_CONFIG_FILE"
+  echo -e "\n配置已保存到 $TG_CONFIG_FILE，下次运行可直接使用。"
 }
 
 send_to_telegram(){
+  local first_run=0
+  if [ ! -f "$TG_CONFIG_FILE" ]; then
+    first_run=1
+    setup_telegram
+  fi
+
+  source "$TG_CONFIG_FILE"
   [ -z "$SYS_INFO" ] && collect_system_info
+
   if [ -z "$TG_BOT_TOKEN" ] || [ -z "$TG_CHAT_ID" ]; then
     echo "⚠️ Telegram 配置缺失"
     return
   fi
+
   curl -s -X POST "https://api.telegram.org/bot$TG_BOT_TOKEN/sendMessage" \
     -d chat_id="$TG_CHAT_ID" \
     -d text="$SYS_INFO" >/dev/null 2>&1
-  echo -e "${green}✅ 信息已发送到 Telegram${re}"
+
+  if [ "$first_run" -eq 1 ]; then
+    echo -e "${green}✅ 配置已保存，并已发送第一次 VPS 信息到 Telegram${re}"
+  else
+    echo -e "${green}✅ 信息已发送到 Telegram${re}"
+  fi
 }
 
 modify_telegram_config(){
@@ -244,6 +260,7 @@ modify_telegram_config(){
   read -r TG_BOT_TOKEN
   echo "请输入新的 Telegram Chat ID:"
   read -r TG_CHAT_ID
+  mkdir -p "$(dirname "$TG_CONFIG_FILE")"
   echo "TG_BOT_TOKEN=\"$TG_BOT_TOKEN\"" > "$TG_CONFIG_FILE"
   echo "TG_CHAT_ID=\"$TG_CHAT_ID\"" >> "$TG_CONFIG_FILE"
   chmod 600 "$TG_CONFIG_FILE"
@@ -261,37 +278,43 @@ setup_cron_job(){
   echo -e "${green}6) 返回菜单${re}"
   read -rp "请选择 [1-6]: " cron_choice
 
-  CRON_CMD="bash $0 send"
+  CRON_CMD="bash $SCRIPT_PATH send"
 
   case $cron_choice in
-    1)
-      (crontab -l 2>/dev/null | grep -v "$CRON_CMD"; echo "0 0 * * * $CRON_CMD") | crontab -
-      echo -e "${green}✅ 已设置每天 0 点发送一次 VPS 信息${re}"
-      ;;
-    2)
-      (crontab -l 2>/dev/null | grep -v "$CRON_CMD"; echo "0 0 * * 1 $CRON_CMD") | crontab -
-      echo -e "${green}✅ 已设置每周一 0 点发送一次 VPS 信息${re}"
-      ;;
-    3)
-      (crontab -l 2>/dev/null | grep -v "$CRON_CMD"; echo "0 0 1 * * $CRON_CMD") | crontab -
-      echo -e "${green}✅ 已设置每月 1 日 0 点发送一次 VPS 信息${re}"
-      ;;
-    4)
-      crontab -l 2>/dev/null | grep -v "$CRON_CMD" | crontab -
-      echo -e "${red}❌ 已删除本脚本相关的定时任务${re}"
-      ;;
-    5)
-      echo -e "${yellow}当前已配置的定时任务:${re}"
-      crontab -l 2>/dev/null | grep "$CRON_CMD" || echo "⚠️ 没有找到和本脚本相关的定时任务"
-      ;;
+    1) (crontab -l 2>/dev/null | grep -v "$CRON_CMD"; echo "0 0 * * * $CRON_CMD") | crontab - 
+       echo -e "${green}✅ 已设置每天 0 点发送一次 VPS 信息${re}" ;;
+    2) (crontab -l 2>/dev/null | grep -v "$CRON_CMD"; echo "0 0 * * 1 $CRON_CMD") | crontab - 
+       echo -e "${green}✅ 已设置每周一 0 点发送一次 VPS 信息${re}" ;;
+    3) (crontab -l 2>/dev/null | grep -v "$CRON_CMD"; echo "0 0 1 * * $CRON_CMD") | crontab - 
+       echo -e "${green}✅ 已设置每月 1 日 0 点发送一次 VPS 信息${re}" ;;
+    4) crontab -l 2>/dev/null | grep -v "$CRON_CMD" | crontab -
+       echo -e "${red}❌ 已删除本脚本相关的定时任务${re}" ;;
+    5) echo -e "${yellow}当前已配置的定时任务:${re}"
+       crontab -l 2>/dev/null | grep "$CRON_CMD" || echo "⚠️ 没有找到和本脚本相关的定时任务" ;;
     6) return ;;
     *) echo "无效选择" ;;
   esac
 }
 
-# ================== 返回菜单等待 ==================
 pause_return(){
   read -rp "👉 按回车返回菜单..." temp
+}
+
+# ================== 卸载脚本 ==================
+uninstall_script(){
+    echo -e "${yellow}⚠️ 即将卸载 tg.sh 脚本及配置和定时任务${re}"
+    read -rp "确认卸载吗？(y/N): " confirm
+    if [[ "$confirm" =~ ^[Yy]$ ]]; then
+        CRON_CMD="bash $SCRIPT_PATH send"
+        crontab -l 2>/dev/null | grep -v "$CRON_CMD" | crontab -
+        rm -f "$SCRIPT_PATH"
+        rm -f "$TG_CONFIG_FILE"
+        rm -f /opt/vpsx
+        echo -e "${green}✅ 卸载完成,相关数据和定时任务已删除${re}"
+        exit 0
+    else
+        echo "取消卸载"
+    fi
 }
 
 # ================== 菜单 ==================
@@ -303,14 +326,16 @@ menu(){
     echo -e "${green}2) 发送 VPS 信息到 Telegram${re}"
     echo -e "${green}3) 修改 Telegram 配置${re}"
     echo -e "${green}4) 设置定时任务${re}"
-    echo -e "${green}5) 退出${re}"
-    read -rp "请选择操作 [1-5]: " choice
+    echo -e "${green}5) 卸载脚本${re}"
+    echo -e "${green}6) 退出${re}"
+    read -rp "请选择操作: " choice
     case $choice in
       1) collect_system_info; echo "$SYS_INFO"; pause_return ;;
       2) collect_system_info; send_to_telegram; pause_return ;;
       3) modify_telegram_config; pause_return ;;
       4) setup_cron_job; pause_return ;;
-      5) exit 0 ;;
+      5) uninstall_script ;;
+      6) exit 0 ;;
       *) echo "无效选择"; pause_return ;;
     esac
   done
@@ -318,13 +343,11 @@ menu(){
 
 # ================== 命令行模式 ==================
 if [ "$1" == "send" ]; then
-  setup_telegram
-  collect_system_info
   send_to_telegram
   exit 0
 fi
 
 # ================== 脚本入口 ==================
-install_deps
-setup_telegram
-menu
+install_deps      # 安装依赖
+download_script   # 启动时自动下载/更新自身
+menu              # 进入菜单
