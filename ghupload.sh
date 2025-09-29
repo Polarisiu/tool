@@ -4,9 +4,9 @@
 BASE_DIR="$HOME/ghupload"
 CONFIG_FILE="$BASE_DIR/.ghupload_config"
 LOG_FILE="$BASE_DIR/github_upload.log"
-TMP_BASE="/root/github/tmp"
-UPLOAD_DIR="/root/github/upload"
-DOWNLOAD_DIR="/root/github/download"
+TMP_BASE="$BASE_DIR/github/tmp"
+UPLOAD_DIR="$BASE_DIR/github/upload"
+DOWNLOAD_DIR="$BASE_DIR/github/download"
 
 mkdir -p "$BASE_DIR" "$TMP_BASE" "$UPLOAD_DIR" "$DOWNLOAD_DIR"
 
