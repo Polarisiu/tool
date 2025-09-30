@@ -8,7 +8,7 @@
 REINSTALL_URL="https://raw.githubusercontent.com/bin456789/reinstall/main/reinstall.sh"
 SCRIPT_NAME="reinstall.sh"
 
-echo "⚠️ 警告: 此操作将会完全重装系统，磁盘上所有数据将丢失！"
+echo "警告: 此操作将会完全重装系统，磁盘上所有数据将丢失！"
 echo "请确保已备份重要数据！"
 echo
 
@@ -45,6 +45,6 @@ echo "🔧 正在执行重装脚本..."
 ./"$SCRIPT_NAME" debian 12 --password "$ROOT_PASS" --ssh-port "$SSH_PORT"
 
 # 提示用户系统将重启
-echo "⚠️ 系统将在完成后重启。"
+echo " 系统将在完成后重启。"
 read -p "按 Enter 确认重启..." dummy
 reboot
