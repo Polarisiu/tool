@@ -12,7 +12,6 @@ menu() {
     echo -e "${GREEN}3) 修改为 阿里云 DNS (223.5.5.5 / 183.60.83.19)${RESET}"
     echo -e "${GREEN}4) 自定义 DNS ${RESET}"
     echo -e "${GREEN}0) 退出${RESET}"
-    echo
     read -p $'\033[32m请选择操作 (0-4): \033[0m' choice
     case $choice in
         1)
