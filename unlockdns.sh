@@ -2,7 +2,7 @@
 # 流媒体解锁 DNS 快捷切换脚本（无检测）
 
 # 菜单顺序
-dns_order=("Def" "HK" "JP" "TW" "SG" "US" "UK" "DE" "RFC" "自定义" "更新脚本")
+dns_order=("Def" "HK" "JP" "TW" "SG" "US" "UK" "DE" "RFC" "自定义" )
 
 # DNS 列表
 declare -A dns_list=(
@@ -16,7 +16,6 @@ declare -A dns_list=(
   ["DE"]="154.83.83.90"
   ["RFC"]="22.22.22.22"
   ["自定义"]="custom"
-  ["更新脚本"]="update"
 )
 
 # 绿色
@@ -35,7 +34,7 @@ while true; do
         fi
         (( count % 2 == 0 )) && echo ""
     done
-    echo -e "\n${green}[0 ] 退出${reset}\n"
+    echo -e "${green}[0 ] 退出${reset}"
 
     read -p "$(echo -e ${green}请输入编号:${reset}) " choice
 
@@ -49,13 +48,6 @@ while true; do
     # 判断输入
     if [[ "$choice" =~ ^[0-9]+$ ]] && (( choice >= 1 && choice <= ${#dns_order[@]} )); then
         region="${dns_order[$((choice-1))]}"
-
-        # 更新脚本
-        if [[ "$region" == "更新脚本" ]]; then
-            echo -e "${green}正在从远程拉取并运行最新版本...${reset}"
-            bash <(curl -sL https://raw.githubusercontent.com/Polarisiu/tool/main/unlockdns.sh)
-            exit 0
-        fi
 
         # 自定义 DNS
         if [[ "$region" == "自定义" ]]; then
@@ -75,4 +67,4 @@ while true; do
     else
         echo -e "${green}无效选择，请重新输入。${reset}"
     fi
-done
+done  
