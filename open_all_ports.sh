@@ -95,4 +95,4 @@ elif [[ "$FW_TYPE" == "nftables" ]]; then
     echo -e "${GREEN}所有端口已开放（nftables）${RESET}"
 fi
 
-echo -e "${YELLOW}⚠️ 请注意：VPS 所有端口已开放，存在安全风险${RESET}"
+echo -e "${YELLOW} 请注意：VPS 所有端口已开放，存在安全风险${RESET}"
