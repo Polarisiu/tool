@@ -149,7 +149,7 @@ while true; do
                 clear
                 send_stats "批量执行任务"
                 echo -e "${GREEN}===== 批量执行任务 =====${RESET}"
-                echo -e "${GREEN}11. 安装IU工具箱${RESET}"
+                echo -e "${GREEN}11. 安装UU工具箱${RESET}"
                 echo -e "${GREEN}12. 清理系统${RESET}"
                 echo -e "${GREEN}13. 设置上海时区${RESET}"
                 echo -e "${GREEN}14. 开放所有端口${RESET}"          
@@ -158,7 +158,7 @@ while true; do
                 read -e -p "请选择操作: " task_choice
 
                 case $task_choice in
-                    11) run_commands_on_servers "bash <(curl -fsSL https://raw.githubusercontent.com/Polarisiu/vps-toolbox/main/install.sh)" ;;
+                    11) run_commands_on_servers "bash <(curl -sL https://raw.githubusercontent.com/Polarisiu/vps-toolbox/main/uu.sh)" ;;
                     12) run_commands_on_servers "bash <(curl -sL https://raw.githubusercontent.com/Polarisiu/tool/main/clear.sh)" ;;
                     13) run_commands_on_servers "timedatectl set-timezone Asia/Shanghai" ;;
                     14) run_commands_on_servers "bash <(curl -sL https://raw.githubusercontent.com/Polarisiu/tool/main/open_all_ports.sh)" ;;
