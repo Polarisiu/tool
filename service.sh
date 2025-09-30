@@ -144,6 +144,6 @@ while true; do
         fi
 
     else
-        echo -e "${YELLOW}输入格式错误${RESET}"
+        echo -e "${YELLOW}输入无效${RESET}"
     fi
 done
