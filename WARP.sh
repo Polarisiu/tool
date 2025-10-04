@@ -3,7 +3,11 @@
 
 SWAP_FILE="/swapfile"
 GREEN="\033[32m"
+YELLOW="\033[33m"
+RED="\033[31m"
+BLUE="\033[34m"
 RESET="\033[0m"
+BOLD="\033[1m"
 
 menu() {
     clear
@@ -15,14 +19,14 @@ menu() {
     fi
 
     echo -e "${GREEN}========== VPS SWAP 管理 ==========${RESET}"
-    echo -e "当前 SWAP 状态: ${GREEN}${STATUS}${RESET}"
+    echo -e "${GREEN}当前 SWAP 状态: ${YELLOW}${STATUS}${RESET}"
     echo -e "${GREEN}-----------------------------------${RESET}"
     echo -e "${GREEN}1. 添加 SWAP (默认 1G)${RESET}"
     echo -e "${GREEN}2. 删除 SWAP${RESET}"
     echo -e "${GREEN}3. 查看 SWAP${RESET}"
     echo -e "${GREEN}0. 退出${RESET}"
-    echo -e "${GREEN}===================================${RESET}"
-    read -p "请输入选项 [0-3]: " choice
+    echo -e "${GREEN}-----------------------------------${RESET}"
+    read -p "请输入选项[0-3]: " choice
     case $choice in
         1) add_swap ;;
         2) del_swap ;;
