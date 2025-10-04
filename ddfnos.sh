@@ -24,8 +24,8 @@ menu() {
             if [ ! -f "reinstall.sh" ]; then
                 echo -e "${RED}❌ 未找到 reinstall.sh，请先执行 [1 安装重装系统脚本]${RESET}"
             else
-                echo -e "${YELLOW}⚠️ 重要提示：执行 DD 飞牛系统会重装系统并清空所有数据！${RESET}"
-                echo -e "${YELLOW}⚠️ 此操作不可逆，请谨慎选择！${RESET}"
+                echo -e "${YELLOW}重要提示：执行 DD 飞牛系统会重装系统并清空所有数据！${RESET}"
+                echo -e "${YELLOW}此操作不可逆，请谨慎选择！${RESET}"
                 read -p $'\033[31m是否继续？(y/N): \033[0m' confirm
                 if [[ "$confirm" =~ ^[Yy]$ ]]; then
                     echo -e "${GREEN}🚀 正在执行 DD 飞牛系统...${RESET}"
