@@ -9,7 +9,7 @@ menu() {
     clear
     echo -e "${GREEN}=== DD飞牛管理菜单 ===${RESET}"
     echo -e "${GREEN}1) 安装重装系统脚本${RESET}"
-    echo -e "${GREEN}2) DD 飞牛系统${RESET}"
+    echo -e "${GREEN}2) DD飞牛系统${RESET}"
     echo -e "${GREEN}0) 退出${RESET}"
     read -p $'\033[32m请选择操作: \033[0m' choice
     case $choice in
