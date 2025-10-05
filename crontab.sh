@@ -67,8 +67,10 @@ validate_number() {
 add_cron_task() {
     read -e -p "请输入新任务的执行命令: " newquest
     echo -e "${GREEN}------------------------${RESET}"
-    echo -e "${GREEN}1. 每月任务                 2. 每周任务${RESET}"
-    echo -e "${GREEN}3. 每天任务                 4. 每小时任务${RESET}"
+    echo -e "${GREEN}1. 每月任务${RESET}"                
+    echo -e "${GREEN}2. 每周任务${RESET}"
+    echo -e "${GREEN}3. 每天任务${RESET}"  
+    echo -e "${GREEN}4. 每小时任务${RESET}"
     echo -e "${GREEN}------------------------${RESET}"
     read -e -p "请选择任务类型: " dingshi
     case $dingshi in
@@ -166,10 +168,9 @@ cron_menu() {
         echo -e "${GREEN}当前定时任务列表:${RESET}"
         crontab -l 2>/dev/null || echo -e "${GREEN}(无定时任务)${RESET}"
         echo ""
-        echo -e "${GREEN}操作:${RESET}"
         echo -e "${GREEN}------------------------${RESET}"
         echo -e "${GREEN}1. 添加定时任务${RESET}"
-        echo -e "${GREEN}2. 删除定时任务（按序号选择）${RESET}"
+        echo -e "${GREEN}2. 删除定时任务${RESET}"
         echo -e "${GREEN}3. 编辑定时任务${RESET}"
         echo -e "${GREEN}0. 退出脚本${RESET}"
         echo -e "${GREEN}------------------------${RESET}"
