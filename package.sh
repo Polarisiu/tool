@@ -223,7 +223,7 @@ while true; do
     show_menu
     read -rp $'\033[32m请输入要操作的编号: \033[0m' sub_choice
 
-    [[ "$sub_choice" == "00" ]] && echo -e "${GREEN}退出菜单${RESET}" && break
+    [[ "$sub_choice" == "00" ]] && break
 
     if [[ "$sub_choice" == "99" ]]; then
         uninstall_tool
