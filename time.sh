@@ -79,7 +79,7 @@ set_timezone() {
 show_menu() {
     clear
     echo -e "${GREEN}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${RESET}"
-    echo -e "${GREEN}         🌍 通用时区管理脚本${RESET}"
+    echo -e "${GREEN}         🌍 通用时区管理${RESET}"
     echo -e "${GREEN}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${RESET}"
     echo -e "${GREEN} 当前时区:${YELLOW} $(get_timezone)${RESET}"
     echo -e "${GREEN} 1) 设置为 UTC全球标准${RESET}"
