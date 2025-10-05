@@ -244,7 +244,7 @@ while true; do
             *) echo -e "${RED}未知模式: $mode${RESET}" ;;
         esac
         cd ~
-        echo -e "${GREEN}\n按回车返回菜单...${RESET}"
+        echo -e "${GREEN}按回车返回菜单...${RESET}"
         read -r
     else
         echo -e "${RED}无效选择: $sub_choice${RESET}"
