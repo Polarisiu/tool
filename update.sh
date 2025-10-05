@@ -143,4 +143,3 @@ update_system() {
 # -------------------------
 clear
 update_system
-echo -e "${GREEN}✅ 脚本执行完成！${RESET}"
