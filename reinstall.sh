@@ -64,14 +64,14 @@ while true; do
             echo -e "${GREEN}--- $category 系统 ---${RESET}"
             last_category="$category"
         fi
-        echo -e "${GREEN}${id}. ${name}${RESET}"
+        echo -e "${YELLOW}${id}. ${name}${RESET}"
     done
-    echo -e "${GREEN} 0. 取消 / 返回上一级${RESET}"
+    echo -e "${RED}00.退出${RESET}"
 
     # 用户选择编号
-    read -p "请输入系统编号 [0-31]: " num_choice
+    read -p "请输入系统编号: " num_choice
 
-    if [[ "$num_choice" == "0" ]]; then
+    if [[ "$num_choice" == "00" ]]; then
         echo -e "${YELLOW}已取消操作，退出脚本${RESET}"
         exit 0
     fi
