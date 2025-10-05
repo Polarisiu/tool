@@ -146,7 +146,7 @@ linux_backup() {
         echo -e "${GREEN}2. 恢复备份${RESET}"
         echo -e "${GREEN}3. 删除备份${RESET}"
         echo -e "${GREEN}0. 退出${RESET}"
-        read -e -p "请输入你的选择: " choice
+        read -p "$(echo -e ${GREEN}请输入选项: ${RESET})" choice
         case $choice in
             1) create_backup ;;
             2) restore_backup ;;
