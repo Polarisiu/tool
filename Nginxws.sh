@@ -13,12 +13,10 @@ menu() {
     read -p $'\033[32m请选择操作: \033[0m' choice
     case $choice in
         1)
-            echo -e "${GREEN}正在运行 NGINX 反代 (V4) 脚本...${RESET}"
             bash <(curl -sL https://raw.githubusercontent.com/Polarisiu/tool/main/ngixv4.sh)
             pause
             ;;
         2)
-            echo -e "${GREEN}正在运行 NGINX 反代 (V6) 脚本...${RESET}"
             bash <(curl -sL https://raw.githubusercontent.com/Polarisiu/tool/main/ngixv6.sh)
             pause
             ;;
