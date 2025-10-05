@@ -34,13 +34,13 @@ while true; do
         fi
         (( count % 2 == 0 )) && echo ""
     done
-    echo -e "${green}[0 ] 退出${reset}"
+    echo -e "${green}[00] 退出${reset}"
 
     read -p "$(echo -e ${green}请输入编号:${reset}) " choice
 
 
     # 退出
-    if [[ "$choice" == "0" ]]; then
+    if [[ "$choice" == "00" ]]; then
         exit 0
     fi
 
