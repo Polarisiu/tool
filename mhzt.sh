@@ -33,7 +33,7 @@ while true; do
       5) apply_prompt "'\[\033[1;36m\]\u@\h:\w#\[\033[0m\]'" ;;
       6) apply_prompt "'\[\033[1;37m\]\u@\h:\w#\[\033[0m\]'" ;;
       7) apply_prompt "'\u@\h:\w#'" ;;   # 默认无颜色
-      0) echo "退出"; break ;;
+      0) break ;;
       *) echo "无效选择"; read -p "按回车返回菜单..." ;;
     esac
 done
