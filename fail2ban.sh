@@ -4,6 +4,7 @@ set -e
 GREEN="\033[32m"
 RED="\033[31m"
 RESET="\033[0m"
+YELLOW="\033[33m"
 
 # 检查 Fail2Ban 是否运行
 check_fail2ban() {
@@ -83,9 +84,9 @@ uninstall_fail2ban() {
 fail2ban_menu() {
     while true; do
         clear
-        echo -e "${GREEN}SSH 防暴力破解管理菜单${RESET}"
-        echo -e "${GREEN}------------------------${RESET}"
-        echo -e "${GREEN}1. 安装并开启SSH防暴力破解${RESET}"
+        echo -e "${GREEN}====SSH 防暴力破解管理菜单====${RESET}"
+        echo -e "${YELLOW}------------------------${RESET}"
+        echo -e "${GREEN}1. 安装开启SSH防暴力破解${RESET}"
         echo -e "${GREEN}2. 关闭SSH防暴力破解${RESET}"
         echo -e "${GREEN}3. 配置SSH防护参数${RESET}"
         echo -e "${GREEN}4. 查看SSH拦截记录${RESET}"
@@ -93,7 +94,7 @@ fail2ban_menu() {
         echo -e "${GREEN}6. 查看日志实时监控${RESET}"
         echo -e "${GREEN}7. 卸载防御程序${RESET}"
         echo -e "${GREEN}0. 退出${RESET}"
-        echo -e "${GREEN}------------------------${RESET}"
+        echo -e "${YELLOW}------------------------${RESET}"
         read -p $'\033[32m请输入你的选择: \033[0m' sub_choice
 
         case $sub_choice in
