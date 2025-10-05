@@ -91,12 +91,12 @@ run_commands_on_servers() {
 while true; do
     clear
     send_stats "集群控制中心"
-    echo -e "${GREEN}===== 一级菜单 =====${RESET}"
+    echo -e "${GREEN}===== 集群管理菜单 =====${RESET}"
     echo -e "${GREEN}1. 服务器列表管理${RESET}"
     echo -e "${GREEN}2. 批量执行任务${RESET}"
     echo -e "${GREEN}0. 退出${RESET}"
     echo -e "${GREEN}=================${RESET}"
-    read -e -p "请选择一级菜单: " main_choice
+    read -e -p "$(echo -e ${GREEN}请输入选择: ${RESET})" main_choice
 
     case $main_choice in
         1)
@@ -109,7 +109,7 @@ while true; do
                 echo -e "${GREEN}1. 添加服务器${RESET}"
                 echo -e "${GREEN}2. 删除服务器${RESET}"
                 echo -e "${GREEN}0. 返回上级菜单${RESET}"
-                read -e -p "请选择操作: " server_choice
+                read -e -p "$(echo -e ${GREEN}请输入选择: ${RESET})" server_choice
 
                 case $server_choice in
                     1)
@@ -135,7 +135,7 @@ while true; do
                         read -n1 -s -r -p "按任意键返回菜单..."
                         ;;
                     0) break ;;
-                    *) echo "❌ 无效选项" ; sleep 1 ;;
+                    *) echo -e "${RED}无效选择，请重新输入${RESET}" ; sleep 1 ;;
                 esac
             done
             ;;
@@ -144,34 +144,33 @@ while true; do
                 clear
                 send_stats "批量执行任务"
                 echo -e "${GREEN}===== 批量执行任务 =====${RESET}"
-                echo -e "${GREEN}11. 安装UU工具箱${RESET}"
-                echo -e "${GREEN}12. 清理系统${RESET}"
-                echo -e "${GREEN}13. 设置上海时区${RESET}"
-                echo -e "${GREEN}14. 开放所有端口${RESET}"          
-                echo -e "${GREEN}50. 自定义指令${RESET}"
-                echo -e "${GREEN} 0. 返回上级菜单${RESET}"
-                read -e -p "请选择操作: " task_choice
+                echo -e "${GREEN}1. 安装UU工具箱${RESET}"
+                echo -e "${GREEN}2. 清理系统${RESET}"
+                echo -e "${GREEN}3. 设置上海时区${RESET}"
+                echo -e "${GREEN}4. 开放所有端口${RESET}"          
+                echo -e "${GREEN}5. 自定义指令${RESET}"
+                echo -e "${GREEN}0. 返回上级菜单${RESET}"
+                read -e -p "$(echo -e ${GREEN}请输入选择: ${RESET})" task_choice
 
                 case $task_choice in
-                    11) run_commands_on_servers "bash <(curl -sL https://raw.githubusercontent.com/Polarisiu/vps-toolbox/main/uu.sh)" ;;
-                    12) run_commands_on_servers "bash <(curl -sL https://raw.githubusercontent.com/Polarisiu/tool/main/clear.sh)" ;;
-                    13) run_commands_on_servers "timedatectl set-timezone Asia/Shanghai" ;;
-                    14) run_commands_on_servers "bash <(curl -sL https://raw.githubusercontent.com/Polarisiu/tool/main/open_all_ports.sh)" ;;
-                    50)
+                    1) run_commands_on_servers "bash <(curl -sL https://raw.githubusercontent.com/Polarisiu/vps-toolbox/main/uu.sh)" ;;
+                    2) run_commands_on_servers "bash <(curl -sL https://raw.githubusercontent.com/Polarisiu/tool/main/clear.sh)" ;;
+                    3) run_commands_on_servers "timedatectl set-timezone Asia/Shanghai" ;;
+                    4) run_commands_on_servers "bash <(curl -sL https://raw.githubusercontent.com/Polarisiu/tool/main/open_all_ports.sh)" ;;
+                    5)
                         read -e -p "请输入自定义命令: " cmd
                         run_commands_on_servers "$cmd"
                         ;;
                     0) break ;;
-                    *) echo "❌ 无效选项" ; sleep 1 ;;
+                    *) echo -e "${RED}无效选择，请重新输入${RESET}" ; sleep 1 ;;
                 esac
             done
             ;;
         0)
-            echo "👋 已退出管理菜单"
             break
             ;;
         *)
-            echo "❌ 无效选项，请重新输入"
+            echo -e "${RED}无效选择，请重新输入${RESET}"
             sleep 1
             ;;
     esac
