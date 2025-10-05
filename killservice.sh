@@ -202,7 +202,7 @@ while true; do
         n) max_page=$(( (${#FULL_DISPLAY_LINES[@]} + PAGE_SIZE - 1) / PAGE_SIZE )); (( CURRENT_PAGE < max_page )) && ((CURRENT_PAGE++)); refresh_list ;;
         p) (( CURRENT_PAGE > 1 )) && ((CURRENT_PAGE--)); refresh_list ;;
         r) generate_full_list; refresh_list ;;
-        0) echo -e "${GREEN}退出脚本${RESET}"; exit 0 ;;
+        0) exit 0 ;;
         *) echo -e "${YELLOW}无效输入${RESET}" ;;
     esac
 done
