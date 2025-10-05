@@ -49,6 +49,7 @@ delete_workspace() {
 
 # 主循环菜单
 while true; do
+    clear
     echo -e "${GREEN}==== 我的工作区=======${RESET}"
     echo -e "${GREEN}a. 安装工作区环境${RESET}"
     echo -e "${GREEN}b. 卸载工作区环境${RESET}"
@@ -63,16 +64,15 @@ while true; do
     read -rp "$(echo -e ${GREEN}请输入你的选择: ${RESET})" sub_choice
 
     case $sub_choice in
-        a) clear; install_tmux ;;
-        b) clear; remove_tmux ;;
-        1) clear; open_workspace "work1" ;;
-        2) clear; open_workspace "work2" ;;
-        3) clear; open_workspace "work3" ;;
-        4) clear; open_workspace "work4" ;;
-        5) clear; open_workspace "work5" ;;
-        7) clear; delete_workspace ;;
+        a) install_tmux ;;
+        b) remove_tmux ;;
+        1) open_workspace "work1" ;;
+        2) open_workspace "work2" ;;
+        3) open_workspace "work3" ;;
+        4) open_workspace "work4" ;;
+        5) open_workspace "work5" ;;
+        7) delete_workspace ;;
         8)
-            clear
             if tmux list-sessions >/dev/null 2>&1; then
                 echo -e "${GREEN}当前运行的工作区:${RESET}"
                 tmux list-sessions
