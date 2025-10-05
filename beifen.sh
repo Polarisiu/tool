@@ -4,6 +4,7 @@
 GREEN="\033[32m"
 YELLOW="\033[33m"
 RESET="\033[0m"
+RED="\033[31m"
 
 # 记录操作日志
 log_action() {
@@ -15,12 +16,7 @@ log_action() {
 create_backup() {
     log_action "创建备份"
     local TIMESTAMP=$(date +"%Y%m%d%H%M%S")
-
-    echo -e "${GREEN}创建备份示例：${RESET}"
-    echo "  - 备份单个目录: /var/www"
-    echo "  - 备份多个目录: /etc /home /var/log"
-    echo "  - 直接回车将使用默认目录 (/etc /usr /home)"
-    read -r -p "请输入要备份的目录（多个目录用空格分隔，直接回车则使用默认目录）：" input
+    read -r -p "请输入要备份的目录（多个目录用空格分隔，例如/root /home）：" input
 
     if [ -z "$input" ]; then
         BACKUP_PATHS=( "/etc" "/usr" "/home" )
@@ -45,14 +41,14 @@ create_backup() {
 
     local BACKUP_NAME="${PREFIX}_$TIMESTAMP.tar.gz"
 
-    echo "您选择的备份目录为："
+    echo -e "${GREEN}您选择的备份目录为：{RESET}"
     for path in "${BACKUP_PATHS[@]}"; do
         echo "- $path"
     done
 
     command -v tar >/dev/null 2>&1 || { echo "tar 未安装，请先安装"; return; }
 
-    echo "正在创建备份 $BACKUP_NAME..."
+    echo -e "${GREEN}正在创建备份 $BACKUP_NAME...{RESET}"
     tar -czvf "$BACKUP_DIR/$BACKUP_NAME" "${BACKUP_PATHS[@]}"
     if [ $? -eq 0 ]; then
         echo -e "${GREEN}备份创建成功: $BACKUP_DIR/$BACKUP_NAME${RESET}"
@@ -85,7 +81,7 @@ restore_backup() {
     read -p "恢复备份会覆盖现有文件，确定吗？(y/N): " confirm
     [ "$confirm" != "y" ] && echo "取消恢复" && return
 
-    echo "正在恢复备份 $BACKUP_NAME..."
+    echo -e "${GREEN}正在恢复备份 $BACKUP_NAME...${RESET}"
     tar -xzvf "$BACKUP_DIR/$BACKUP_NAME" -C /
     if [ $? -eq 0 ]; then
         echo -e "${GREEN}备份恢复成功！${RESET}"
@@ -98,11 +94,11 @@ restore_backup() {
 
 # 列出备份，最新备份高亮
 list_backups() {
-    echo "可用的备份："
+    echo -e "${YELLOW}可用的备份：${RESET}"
     local files
     files=($(ls -1t "$BACKUP_DIR"/*.tar.gz 2>/dev/null))
     if [ ${#files[@]} -eq 0 ]; then
-        echo "暂无备份文件"
+        echo -e "${YELLOW}暂无备份文件${RESET}"
         return
     fi
     for i in "${!files[@]}"; do
@@ -143,19 +139,20 @@ linux_backup() {
     while true; do
         clear
         echo -e "${GREEN}=== 系统备份功能 ===${RESET}"
-        echo "------------------------"
+        echo -e "${GREEN}------------------------${RESET}"
         list_backups
-        echo "------------------------"
-        echo -e "${GREEN}1. 创建备份        2. 恢复备份        3. 删除备份${RESET}"
-        echo -e "${GREEN}0. 返回上一级选单${RESET}"
-        echo "------------------------"
+        echo -e "${GREEN}------------------------${RESET}"
+        echo -e "${GREEN}1. 创建备份${RESET}"
+        echo -e "${GREEN}2. 恢复备份${RESET}"
+        echo -e "${GREEN}3. 删除备份${RESET}"
+        echo -e "${GREEN}0. 退出${RESET}"
         read -e -p "请输入你的选择: " choice
         case $choice in
             1) create_backup ;;
             2) restore_backup ;;
             3) delete_backup ;;
             0) break ;;
-            *) echo "无效选项" ;;
+            *) echo -e "${RED}无效选项${RESET}" ;;
         esac
         read -e -p "按回车键继续..."
     done
