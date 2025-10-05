@@ -19,7 +19,6 @@ while true; do
     echo -e "${GREEN}5) 远程系统快照恢复${NC}"
     echo -e "${GREEN}6) 卸载快照备份${NC}"
     echo -e "${GREEN}0) 退出菜单${NC}"
-    echo
     read -p "$(echo -e ${GREEN}请选择操作 [0-6]: ${NC})" choice
 
     case $choice in
