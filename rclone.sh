@@ -12,21 +12,20 @@ plain="\033[0m"
 # 显示菜单
 show_menu() {
     clear
-    echo -e "${green}========== Rclone 管理菜单 =========="
-    echo -e "1. 安装 Rclone"
-    echo -e "2. 卸载 Rclone（含 systemd 服务）"
-    echo -e "3. 配置 Rclone"
-    echo -e "4. 挂载远程存储到本地"
-    echo -e "5. 同步 本地 → 远程"
-    echo -e "6. 同步 远程 → 本地"
-    echo -e "7. 查看远程存储文件 (rclone ls)"
-    echo -e "8. 查看远程存储列表 (rclone listremotes)"
-    echo -e "9. 卸载挂载点 (按远程名称)"
-    echo -e "10. 查看当前挂载点"
-    echo -e "11. 一键卸载所有挂载点"
-    echo -e "12. 生成 systemd 服务文件并启动"
-    echo -e "${red} 0. 退出${green}"
-    echo -e "=================================${plain}"
+    echo -e "${green}====== Rclone 管理菜单 =======${plain}"
+    echo -e "${green} 1. 安装 Rclone${plain}"
+    echo -e "${green} 2. 卸载 Rclone${plain}"
+    echo -e "${green} 3. 配置 Rclone${plain}"
+    echo -e "${green} 4. 挂载远程存储到本地${plain}"
+    echo -e "${green} 5. 同步 本地 → 远程${plain}"
+    echo -e "${green} 6. 同步 远程 → 本地${plain}"
+    echo -e "${green} 7. 查看远程存储文件${plain}"
+    echo -e "${green} 8. 查看远程存储列表${plain}"
+    echo -e "${green} 9. 卸载挂载点${plain}"
+    echo -e "${green}10. 查看当前挂载点${plain}"
+    echo -e "${green}11. 卸载所有挂载点${plain}"
+    echo -e "${green}12. 设置开机启动${plain}"
+    echo -e "${green} 0. 退出${plain}${plain}"
 }
 
 # 安装 Rclone
@@ -215,7 +214,7 @@ while true; do
         10) show_mounts ;;
         11) unmount_all ;;
         12) generate_systemd_service ;;
-        0) echo -e "${green}退出菜单，再见！${plain}"; exit 0 ;;
+        0)  exit 0 ;;
         *) echo -e "${red}无效选项，请重新输入${plain}" ;;
     esac
     read -r -p "按回车继续..."
