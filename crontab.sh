@@ -174,7 +174,7 @@ cron_menu() {
         echo -e "${GREEN}3. 编辑定时任务${RESET}"
         echo -e "${GREEN}0. 退出脚本${RESET}"
         echo -e "${GREEN}------------------------${RESET}"
-        read -p "$(echo -e ${GREEN}请输入选项: ${RESET}" sub_choice
+        read -p "$(echo -e "${GREEN}请输入选项: ${RESET}")" sub_choice
 
         case $sub_choice in
             1) add_cron_task ;;
