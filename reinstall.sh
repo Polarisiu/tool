@@ -66,10 +66,10 @@ while true; do
         fi
         echo -e "${YELLOW}${id}. ${name}${RESET}"
     done
-    echo -e "${RED}00.退出${RESET}"
+    echo -e "${RED}00. 退出${RESET}"
 
     # 用户选择编号
-    read -p "请输入系统编号: " num_choice
+    read -p "$(echo -e ${GREEN}请输入选项: ${RESET})" num_choice
 
     if [[ "$num_choice" == "00" ]]; then
         exit 0
