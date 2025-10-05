@@ -53,7 +53,6 @@ while true; do
             read -p "$(echo -e ${GREEN}按回车继续...${NC})"
             ;;
         0)
-            echo -e "${GREEN}退出菜单${NC}"
             exit 0
             ;;
         *)
