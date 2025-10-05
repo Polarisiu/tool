@@ -49,7 +49,6 @@ delete_workspace() {
 
 # 主循环菜单
 while true; do
-    clear
     echo -e "${GREEN}==== 我的工作区=======${RESET}"
     echo -e "${GREEN}a. 安装工作区环境${RESET}"
     echo -e "${GREEN}b. 卸载工作区环境${RESET}"
