@@ -156,7 +156,6 @@ while true; do
             read -p "按回车返回菜单..."
             ;;
         0)
-            echo -e "${GREEN}👋 已退出${RESET}"
             exit 0
             ;;
         *)
