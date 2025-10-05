@@ -31,7 +31,7 @@ menu() {
         2) del_swap ;;
         3) view_swap ;;
         0) exit 0 ;;
-        *) echo "❌ 无效选项"; read -p "按回车返回菜单..." ; menu ;;
+        *) echo -e "${RED}❌ 无效选项${RESET})"; read -p "按回车返回菜单..." ; menu ;;
     esac
 }
 
