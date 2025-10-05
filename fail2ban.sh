@@ -94,7 +94,6 @@ fail2ban_menu() {
         echo -e "${GREEN}7. 卸载防御程序${RESET}"
         echo -e "${GREEN}0. 退出${RESET}"
         echo -e "${GREEN}------------------------${RESET}"
-
         read -p $'\033[32m请输入你的选择: \033[0m' sub_choice
 
         case $sub_choice in
