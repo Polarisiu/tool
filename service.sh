@@ -76,7 +76,6 @@ while true; do
     read -p "$(echo -e "${GREEN}输入序号查看状态，s 序号停止服务，r 刷新，n 下一页，p 上一页，0 退出: ${RESET}")" INPUT
 
     if [[ "$INPUT" == "0" ]]; then
-        echo -e "${GREEN}退出脚本${RESET}"
         break
 
     elif [[ "$INPUT" == "r" ]]; then
