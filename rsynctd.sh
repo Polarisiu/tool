@@ -167,7 +167,7 @@ rsync_manager() {
         echo -e "${GREEN}5) 创建定时任务${RESET}"
         echo -e "${GREEN}6) 删除定时任务${RESET}"
         echo -e "${GREEN}0) 退出${RESET}"
-        read -p "$(echo -e ${GREEN}请输入选项: ${RESET}" choice
+        read -p "$(echo -e "${GREEN}请输入选项: ${RESET}")" choice
         case $choice in
             1) add_task ;;
             2) delete_task ;;
