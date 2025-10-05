@@ -41,7 +41,6 @@ while true; do
 
     # 退出
     if [[ "$choice" == "0" ]]; then
-        echo -e "${green}退出脚本${reset}"
         exit 0
     fi
 
