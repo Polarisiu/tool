@@ -179,7 +179,7 @@ generate_full_list
 refresh_list
 
 while true; do
-    echo -e "${BOLD}${GREEN}\n=== 主菜单 ===${RESET}"
+    echo -e "${GREEN}=== 主菜单 ===${RESET}"
     echo -e "${GREEN}1) 启动服务${RESET}"
     echo -e "${GREEN}2) 停止服务${RESET}"
     echo -e "${GREEN}3) 重启服务${RESET}"
