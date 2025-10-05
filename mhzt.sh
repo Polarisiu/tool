@@ -14,8 +14,7 @@ apply_prompt() {
 }
 
 while true; do
-    echo "命令行美化工具"
-    echo "------------------------"
+    echo "-----命令行美化工具-------"
     echo -e "1. \033[1;32mroot@\\h:~#\033[0m"
     echo -e "2. \033[1;33mroot@\\h:~#\033[0m"
     echo -e "3. \033[1;34mroot@\\h:~#\033[0m"
@@ -23,9 +22,7 @@ while true; do
     echo -e "5. \033[1;36mroot@\\h:~#\033[0m"
     echo -e "6. \033[1;37mroot@\\h:~#\033[0m"
     echo -e "7. root@\\h:~# (默认无颜色)"
-    echo "------------------------"
     echo "0. 退出"
-    echo "------------------------"
     read -e -p "输入你的选择: " choice
 
     case $choice in
