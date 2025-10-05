@@ -223,7 +223,14 @@ while true; do
     show_menu
     read -rp $'\033[32m请输入要操作的编号: \033[0m' sub_choice
 
-    [[ "$sub_choice" == "00" ]] && break
+    # 验证输入是否为纯数字
+    if ! [[ "$sub_choice" =~ ^[0-9]+$ ]]; then
+        echo -e "${RED}无效输入，请输入数字${RESET}"
+        read -rp "按回车返回菜单..." _
+        continue
+    fi
+
+    [[ "$sub_choice" == "0" || "$sub_choice" == "00" ]] && break
 
     if [[ "$sub_choice" == "99" ]]; then
         uninstall_tool
