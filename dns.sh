@@ -32,7 +32,7 @@ menu() {
             pause
             ;;
         4)
-            echo -e "${GREEN}正在运行自定义 DNS 设置脚本...${RESET}"
+            echo -e "${GREEN}正在运行自定义 DNS 设置...${RESET}"
             bash <(curl -fsSL https://raw.githubusercontent.com/Polarisiu/tool/main/permanentdns.sh)
             pause
             ;;
