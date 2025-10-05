@@ -200,7 +200,7 @@ menu() {
         echo -e "${GREEN}13. 显示防火墙状态及已放行端口${RESET}"
         echo -e "${GREEN}14. 保存规则并设置开机自启${RESET}"
         echo -e "${GREEN} 0. 退出${RESET}"
-        read -p "请输入选择: " choice
+        read -p "$(echo -e ${GREEN}请输入选项: ${RESET}" choice
 
         case $choice in
             1)
