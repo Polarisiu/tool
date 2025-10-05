@@ -77,7 +77,7 @@ if [[ "$CONFIRM" =~ ^[Yy]$ ]]; then
         fi
     done
 else
-    echo -e "${GREEN}取消操作，退出脚本${RESET}"
+    echo -e "${GREEN}退出${RESET}"
 fi
 
 # ================== 检查端口是否释放 ==================
