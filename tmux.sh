@@ -50,11 +50,7 @@ delete_workspace() {
 # 主循环菜单
 while true; do
     clear
-    echo -e "${GREEN}================ 我的工作区 ================${RESET}"
-    echo -e "${GREEN}系统将为你提供5个后台运行的工作区，你可以用来执行长时间的任务${RESET}"
-    echo -e "${GREEN}即使你断开SSH，工作区中的任务也不会中断，非常方便！${RESET}"
-    echo -e "${GREEN}注意: 进入工作区后使用 Ctrl+b 再按 d 退出${RESET}"
-    echo -e "${GREEN}-------------------------------------------${RESET}"
+    echo -e "${GREEN}==== 我的工作区=======${RESET}"
     echo -e "${GREEN}a. 安装工作区环境${RESET}"
     echo -e "${GREEN}b. 卸载工作区环境${RESET}"
     echo -e "${GREEN}1. 1号工作区${RESET}"
@@ -64,9 +60,7 @@ while true; do
     echo -e "${GREEN}5. 5号工作区${RESET}"
     echo -e "${GREEN}7. 删除指定工作区${RESET}"
     echo -e "${GREEN}8. 工作区状态${RESET}"
-    echo -e "${GREEN}0. 退出脚本${RESET}"
-    echo -e "${GREEN}-------------------------------------------${RESET}"
-
+    echo -e "${GREEN}0. 退出${RESET}"
     read -rp "$(echo -e ${GREEN}请输入你的选择: ${RESET})" sub_choice
 
     case $sub_choice in
@@ -89,7 +83,6 @@ while true; do
             read -p "按回车返回菜单..."
             ;;
         0)
-            echo -e "${GREEN}正在退出脚本...${RESET}"
             exit 0
             ;;
         *) echo -e "${GREEN}无效的输入!${RESET}" ; read -p "按回车返回菜单..." ;;
