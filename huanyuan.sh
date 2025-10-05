@@ -227,7 +227,7 @@ while true; do
             show_recommended_sources
             ;;
         0)
-            echo -e "${GREEN}退出脚本...${RESET}"
+            echo -e "${GREEN}退出${RESET}"
             break
             ;;
         *)
