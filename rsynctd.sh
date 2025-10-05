@@ -5,6 +5,7 @@ set -e
 GREEN="\033[32m"
 RED="\033[31m"
 RESET="\033[0m"
+YELLOW="\033[33m"
 
 # 统一目录
 BASE_DIR="/root/rsync_task"
@@ -30,10 +31,10 @@ install() {
 
 list_tasks() {
     echo -e "${GREEN}已保存的同步任务:${RESET}"
-    echo "---------------------------------"
-    [[ ! -s "$CONFIG_FILE" ]] && echo "暂无任务" && return
+    echo -e "${YELLOW}---------------------------------${RESET}"
+    [[ ! -s "$CONFIG_FILE" ]] && echo -e "${YELLOW}暂无任务${RESET}" && return
     awk -F'|' '{printf "%d - %s: %s -> %s [%s]\n", NR, $1, $2, $4, $6}' "$CONFIG_FILE"
-    echo "---------------------------------"
+    echo -e "${YELLOW}---------------------------------${RESET}"
 }
 
 add_task() {
@@ -166,7 +167,7 @@ rsync_manager() {
         echo -e "${GREEN}5) 创建定时任务${RESET}"
         echo -e "${GREEN}6) 删除定时任务${RESET}"
         echo -e "${GREEN}0) 退出${RESET}"
-        read -e -p "请选择: " choice
+        read -p "$(echo -e ${GREEN}请输入选项: ${RESET}" choice
         case $choice in
             1) add_task ;;
             2) delete_task ;;
