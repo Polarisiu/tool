@@ -102,7 +102,7 @@ while true; do
         0) exit 0 ;;
         *) echo -e "${RED}无效选项，请重新输入${RESET}" ;;
     esac
-    echo -e "\n按回车返回菜单..."
+    echo -e "${GREEN}按回车返回菜单...${RESET}"
     read
 done
 
