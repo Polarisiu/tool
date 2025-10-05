@@ -143,7 +143,7 @@ tools=(
 # ----------------------
 show_menu() {
     clear
-    echo -e "${GREEN}==================== 工具安装菜单 ====================${RESET}"
+    echo -e "${GREEN}========== 工具安装菜单 ===========${RESET}"
     echo -e "${GREEN}系统: $os_name${RESET}"
     for i in $(seq 1 20); do
         IFS=":" read -r tool mode support_os <<< "${tools[$i]}"
@@ -163,9 +163,9 @@ show_menu() {
             printf "${GREEN} [%2d] %-10s${RESET} %b\n" "$i" "$tool" "$status"
         fi
     done
-    echo -e "${GREEN} [55] 卸载已安装工具${RESET}"
-    echo -e "${GREEN} [0 ] 退出${RESET}"
-    echo -e "${GREEN}======================================================${RESET}"
+    echo -e "${GREEN} [99] 卸载已安装工具${RESET}"
+    echo -e "${GREEN} [00] 退出${RESET}"
+    echo -e "${GREEN}===================================${RESET}"
 }
 
 
@@ -223,9 +223,9 @@ while true; do
     show_menu
     read -rp $'\033[32m请输入要操作的编号: \033[0m' sub_choice
 
-    [[ "$sub_choice" == "0" ]] && echo -e "${GREEN}退出菜单${RESET}" && break
+    [[ "$sub_choice" == "00" ]] && echo -e "${GREEN}退出菜单${RESET}" && break
 
-    if [[ "$sub_choice" == "55" ]]; then
+    if [[ "$sub_choice" == "99" ]]; then
         uninstall_tool
         echo -e "${GREEN}按回车返回菜单...${RESET}"
         read -r
