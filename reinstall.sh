@@ -72,7 +72,6 @@ while true; do
     read -p "请输入系统编号: " num_choice
 
     if [[ "$num_choice" == "00" ]]; then
-        echo -e "${YELLOW}已取消操作，退出脚本${RESET}"
         exit 0
     fi
 
