@@ -13,12 +13,10 @@ menu() {
     read -p $'\033[32m请选择操作: \033[0m' choice
     case $choice in
         1)
-            echo -e "${GREEN}正在运行单色美化脚本...${RESET}"
             bash <(curl -sL https://raw.githubusercontent.com/Polarisiu/tool/main/mhzt.sh)
             pause
             ;;
         2)
-            echo -e "${GREEN}正在运行彩色美化脚本...${RESET}"
             bash <(curl -sL https://raw.githubusercontent.com/Polarisiu/tool/main/mhztcs.sh)
             pause
             ;;
