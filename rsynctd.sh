@@ -156,12 +156,15 @@ delete_task_schedule() {
 rsync_manager() {
     while true; do
         clear
-        echo -e "${GREEN}===== Rsync 一键菜单工具 =====${RESET}"
+        echo -e "${GREEN}==== Rsync 菜单工具 ====${RESET}"
         list_tasks
         echo
-        echo -e "${GREEN}1) 创建任务     2) 删除任务${RESET}"
-        echo -e "${GREEN}3) 推送同步     4) 拉取同步${RESET}"
-        echo -e "${GREEN}5) 创建定时任务 6) 删除定时任务${RESET}"
+        echo -e "${GREEN}1) 创建任务${RESET}"
+        echo -e "${GREEN}2) 删除任务${RESET}"
+        echo -e "${GREEN}3) 推送同步${RESET}"
+        echo -e "${GREEN}4) 拉取同步${RESET}"
+        echo -e "${GREEN}5) 创建定时任务${RESET}"
+        echo -e "${GREEN}6) 删除定时任务${RESET}"
         echo -e "${GREEN}0) 退出${RESET}"
         read -e -p "请选择: " choice
         case $choice in
@@ -172,7 +175,7 @@ rsync_manager() {
             5) schedule_task ;;
             6) delete_task_schedule ;;
             0) exit 0 ;;
-            *) echo "无效选择" ;;
+            *) echo -e "${GREEN}无效选择${RESET}" ;;
         esac
         read -e -p "按回车继续..."
     done
