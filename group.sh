@@ -108,7 +108,6 @@ while true; do
                 echo -e "${GREEN}=========================${RESET}"
                 echo -e "${GREEN}1. 添加服务器${RESET}"
                 echo -e "${GREEN}2. 删除服务器${RESET}"
-                echo -e "${GREEN}3. 编辑服务器（删除后重新添加）${RESET}"
                 echo -e "${GREEN}0. 返回上级菜单${RESET}"
                 read -e -p "请选择操作: " server_choice
 
@@ -133,10 +132,6 @@ while true; do
                         done
                         SERVERS=("${new_servers[@]}")
                         echo "✅ 删除完成"
-                        read -n1 -s -r -p "按任意键返回菜单..."
-                        ;;
-                    3)
-                        echo "⚠️ 编辑服务器请直接删除后重新添加"
                         read -n1 -s -r -p "按任意键返回菜单..."
                         ;;
                     0) break ;;
