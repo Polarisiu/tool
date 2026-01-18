@@ -99,7 +99,7 @@ while true; do
     echo -e "${GREEN} 3) 查看 IP v4 v6 状态 & 公网IP${RESET}"
     echo -e "${GREEN} 0) 退出${RESET}"
     echo -e "${GREEN}==============================${RESET}"
-    read -p "请输入选择: " choice
+    read -p "$(echo -e ${GREEN}请选择:${RESET}) " choice
 
     iface=$(detect_iface)
 
