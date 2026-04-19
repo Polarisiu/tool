@@ -30,7 +30,7 @@ fi
 if [ "$OS_ID" = "alpine" ]; then
     echo -e "${YELLOW}🚀 Alpine 极简更新...${RESET}"
     apk update && apk upgrade
-    apk add --no-cache bash curl wget vim tar sudo git gzip openssl ca-certificates tzdata
+    apk add --no-cache bash curl wget vim tar sudo git gzip openssl openssh ca-certificates tzdata
     # Alpine 强制上海时区
     cp /usr/share/zoneinfo/Asia/Shanghai /etc/localtime
     echo "Asia/Shanghai" > /etc/timezone
