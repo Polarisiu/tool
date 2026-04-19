@@ -86,6 +86,4 @@ fi
 # ========================================
 echo -e "${GREEN}----------------------------------${RESET}"
 echo -e "${GREEN}✅ 系统清理完成！${RESET}"
-echo -e "${YELLOW}当前磁盘使用率:${RESET}"
-df -h / | awk 'NR==1 || NR==2'
 echo -e "${YELLOW}当前时间: $(date +'%Y年%m月%d日 %H:%M:%S')${RESET}"
