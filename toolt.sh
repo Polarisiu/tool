@@ -13,57 +13,37 @@ NC='\033[0m'
 
 
 # 脚本元数据
-VERSION="1.1"
+VERSION="1.2"
+SCRIPT_PATH="/root/toolt.sh"
 SCRIPT_URL="https://raw.githubusercontent.com/Polarisiu/tool/main/toolt.sh" # 替换为你脚本的实际URL
 
-# 1. 首次运行自动安装快捷键 (支持 t 和 T)
-install_shortcut_silent() {
-    local script_path=$(readlink -f "$0")
-    
-    # 检查是否已经存在 t 或 T 的别名
-    if ! grep -q "alias t=" ~/.bashrc || ! grep -q "alias T=" ~/.bashrc; then
-        # 先删除可能存在的旧别名防止重复
-        sed -i '/alias t=/d' ~/.bashrc
-        sed -i '/alias T=/d' ~/.bashrc
-        
-        # 写入小写 t 和大写 T
-        echo "alias t='$script_path'" >> ~/.bashrc
-        echo "alias T='$script_path'" >> ~/.bashrc
-        
-        # 让当前会话立即生效
-        alias t="$script_path" 2>/dev/null
-        alias T="$script_path" 2>/dev/null
-        echo -e "${BYellow}快捷键 T/t 已添加。若要立即生效，请执行：${White}source ~/.bashrc${NC}"
-    fi
-}
-
+# --- 1. 更新功能 (针对独立安装模式优化) ---
 update_script() {
     echo -e "${BBlue}正在从服务器获取最新版本...${NC}"
-    # 这里的 "$0" 代表脚本自身，确保下载覆盖的是正确的文件
-    curl -sL "$SCRIPT_URL" -o "$0.tmp"
-    if [ $? -eq 0 ] && [ -s "$0.tmp" ]; then
-        mv "$0.tmp" "$0"
-        chmod +x "$0"
+    # 下载到临时文件
+    curl -sL "$SCRIPT_URL" -o "${SCRIPT_PATH}.tmp"
+    if [ $? -eq 0 ] && [ -s "${SCRIPT_PATH}.tmp" ]; then
+        mv "${SCRIPT_PATH}.tmp" "$SCRIPT_PATH"
+        chmod +x "$SCRIPT_PATH"
         echo -e "${BGreen}更新完成!${NC}"
         sleep 1
-        # 自动重载，这样用户就不需要手动再输入 t 了
-        exec bash "$0"
+        # 使用 exec 重新启动，确保进程无缝切换
+        exec bash "$SCRIPT_PATH"
     else
         echo -e "${BRed}更新失败，请检查网络连接。${NC}"
-        rm -f "$0.tmp"
+        rm -f "${SCRIPT_PATH}.tmp"
         any_key_to_continue
     fi
 }
 
-# --- 3. 卸载功能 ---
+
+# --- 2. 卸载功能 (清理软链接) ---
 uninstall_script() {
-    # 清理 .bashrc 中的别名
-    sed -i '/alias t=/d' ~/.bashrc
-    # 取消当前会话的别名
-    unalias t 2>/dev/null
-    # 删除脚本自身
-    rm -f "$0"
-    echo -e "${BRed}卸载完成!${NC}"
+    echo -e "${BRed}正在卸载工具箱并清理快捷键...${NC}"
+    rm -f /usr/local/bin/t
+    rm -f /usr/local/bin/T
+    rm -f "$SCRIPT_PATH"
+    echo -e "${BGreen}卸载完成!${NC}"
     exit 0
 }
 
@@ -267,7 +247,7 @@ menu_app() {
 
 # --- 程序入口 ---
 
-install_shortcut_silent
+
 
 while true; do
     main_menu
