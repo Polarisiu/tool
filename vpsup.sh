@@ -30,8 +30,11 @@ fi
 if [ "$OS_ID" = "alpine" ]; then
     echo -e "${YELLOW}🚀 Alpine 极简更新...${RESET}"
     apk update && apk upgrade
-    apk add --no-cache bash curl wget vim tar sudo git gzip openssl ca-certificates
-    echo -e "${GREEN}✅ Alpine 更新完成${RESET}"
+    apk add --no-cache bash curl wget vim tar sudo git gzip openssl ca-certificates tzdata
+    # Alpine 强制上海时区
+    cp /usr/share/zoneinfo/Asia/Shanghai /etc/localtime
+    echo "Asia/Shanghai" > /etc/timezone
+    echo -e "${GREEN}✅ Alpine 更新完成 (时区: Asia/Shanghai)${RESET}"
     echo -e "${YELLOW}当前时间: $(date +'%Y年%m月%d日 %H:%M:%S')${RESET}"
     exit 0
 fi
@@ -55,9 +58,7 @@ fix_sources() {
     echo -e "${YELLOW}🔧 修复 Debian 源兼容性...${RESET}"
     files=$(grep -rl "deb" /etc/apt/ 2>/dev/null || true)
     for f in $files; do
-        # 针对 Debian 12 自动补全 non-free-firmware 并清理旧格式
         sed -i -r 's/\bnon-free(-firmware)?\b/non-free non-free-firmware/g' "$f"
-        # 移除可能产生的重复
         sed -i 's/non-free-firmware non-free-firmware/non-free-firmware/g' "$f"
     done
 }
@@ -67,7 +68,7 @@ install_base() {
     apt update && apt upgrade -y
     apt install -y curl wget git vim sudo bash gzip tar unzip rsync \
         net-tools lsof iperf3 mtr jq openssl \
-        netcat-openbsd bind9-dnsutils cron systemd-timesyncd || true
+        netcat-openbsd bind9-dnsutils cron systemd-timesyncd tzdata || true
     systemctl enable --now cron || true
 }
 
@@ -76,33 +77,27 @@ install_rhel() {
     pkg_mgr=$(command -v dnf || echo "yum")
     $pkg_mgr upgrade -y
     $pkg_mgr install -y curl wget git vim sudo bash gzip tar unzip rsync \
-        net-tools lsof iperf3 mtr jq openssl nc bind-utils cronie
+        net-tools lsof iperf3 mtr jq openssl nc bind-utils cronie tzdata
     systemctl enable --now crond || true
 }
 
 set_timezone() {
-    echo -e "${YELLOW}🌏 配置时区...${RESET}"
-    # 增加兜底逻辑：如果获取为空，则使用 Asia/Shanghai
-    local get_tz
-    get_tz=$(curl -s --max-time 5 ipapi.co/timezone || echo "")
+    echo -e "${YELLOW}🌏 配置时区为 上海 (Asia/Shanghai)...${RESET}"
     
-    if [[ -z "$get_tz" || "$get_tz" == *"<html>"* ]]; then
-        tz="Asia/Shanghai"
-    else
-        tz="$get_tz"
+    # 尝试使用 timedatectl (现代系统)
+    if command -v timedatectl >/dev/null 2>&1; then
+        timedatectl set-timezone Asia/Shanghai || true
+        timedatectl set-ntp true || true
+        systemctl enable --now systemd-timesyncd >/dev/null 2>&1 || true
     fi
 
-    # 尝试设置时区
-    if command -v timedatectl >/dev/null 2>&1; then
-        timedatectl set-timezone "$tz" || timedatectl set-timezone Asia/Shanghai
-        timedatectl set-ntp true || true
-        systemctl enable --now systemd-timesyncd || true
-        final_tz=$(timedatectl show --property=Timezone --value)
-    else
-        ln -sf /usr/share/zoneinfo/$tz /etc/localtime || ln -sf /usr/share/zoneinfo/Asia/Shanghai /etc/localtime
-        final_tz="$tz"
+    # 强制软链接 (兜底方案)
+    if [ -f /usr/share/zoneinfo/Asia/Shanghai ]; then
+        ln -sf /usr/share/zoneinfo/Asia/Shanghai /etc/localtime
+        echo "Asia/Shanghai" > /etc/timezone 2>/dev/null || true
     fi
-    echo -e "${GREEN}✔ 时区已设为: $final_tz${RESET}"
+
+    echo -e "${GREEN}✔ 时区已设为: $(date +%Z) (Asia/Shanghai)${RESET}"
 }
 
 enable_bbr() {
@@ -159,5 +154,4 @@ network_test
 
 echo -e "${GREEN}----------------------------------${RESET}"
 echo -e "${GREEN}✅ 更新任务全部完成！${RESET}"
-# 输出最终确认的时间
 echo -e "${YELLOW}系统时间: $(date +'%Y年%m月%d日 %H:%M:%S')${RESET}"
