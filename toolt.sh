@@ -24,7 +24,7 @@ update_script() {
     if [ $? -eq 0 ] && [ -s "${SCRIPT_PATH}.tmp" ]; then
         mv "${SCRIPT_PATH}.tmp" "$SCRIPT_PATH"
         chmod +x "$SCRIPT_PATH"
-        echo -e "${BGreen}更新完成! 正在重启脚本...${NC}"
+        echo -e "${BGreen}更新完成! ${NC}"
         sleep 1
         # 关键：exec 会用新进程替换旧进程，用户无需重新输入 t
         exec bash "$SCRIPT_PATH"
