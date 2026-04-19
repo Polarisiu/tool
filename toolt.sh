@@ -97,7 +97,6 @@ draw_banner() {
 main_menu() {
     draw_banner
     echo -e " ${BBlue}功能分类${NC}"
-    echo ""
     echo -e "  ${BYellow}1. 系统维护${NC}"
     echo -e "  ${BYellow}2. 网络安全${NC}"
     echo -e "  ${BYellow}3. 网络检测${NC}"
@@ -106,10 +105,7 @@ main_menu() {
     echo -e "  ${BYellow}6. 玩具熊${NC}"
     echo -e "  ${BYellow}8. 更新${NC}"
     echo -e "  ${BYellow}9. 卸载${NC}"
-    echo ""
-    echo -e "${BCyan}────────────────────────────────────────────${NC}"
     echo -e "  ${BRed}0. 退出${NC}"
-    echo ""
 }
 
 # 二级菜单处理逻辑
