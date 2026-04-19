@@ -1,4 +1,3 @@
-cat << 'EOF' > toolt.sh
 #!/bin/bash
 
 # 颜色定义
@@ -17,17 +16,17 @@ VERSION="1.2"
 SCRIPT_PATH="/root/toolt.sh"
 SCRIPT_URL="https://raw.githubusercontent.com/Polarisiu/tool/main/toolt.sh" # 替换为你脚本的实际URL
 
-# --- 1. 更新功能 (针对独立安装模式优化) ---
+# --- 1. 更新功能 (优化版) ---
 update_script() {
     echo -e "${BBlue}正在从服务器获取最新版本...${NC}"
-    # 下载到临时文件
+    # 下载到临时文件，避免下载失败导致原脚本损坏
     curl -sL "$SCRIPT_URL" -o "${SCRIPT_PATH}.tmp"
     if [ $? -eq 0 ] && [ -s "${SCRIPT_PATH}.tmp" ]; then
         mv "${SCRIPT_PATH}.tmp" "$SCRIPT_PATH"
         chmod +x "$SCRIPT_PATH"
-        echo -e "${BGreen}更新完成!${NC}"
+        echo -e "${BGreen}更新完成! 正在重启脚本...${NC}"
         sleep 1
-        # 使用 exec 重新启动，确保进程无缝切换
+        # 关键：exec 会用新进程替换旧进程，用户无需重新输入 t
         exec bash "$SCRIPT_PATH"
     else
         echo -e "${BRed}更新失败，请检查网络连接。${NC}"
@@ -36,14 +35,15 @@ update_script() {
     fi
 }
 
-
-# --- 2. 卸载功能 (清理软链接) ---
+# --- 2. 卸载功能 (清理版) ---
 uninstall_script() {
     echo -e "${BRed}正在卸载工具箱并清理快捷键...${NC}"
+    # 清理所有快捷方式
     rm -f /usr/local/bin/t
     rm -f /usr/local/bin/T
+    # 删除主脚本自身
     rm -f "$SCRIPT_PATH"
-    echo -e "${BGreen}卸载完成!${NC}"
+    echo -e "${BGreen}卸载完成! 期待再次见到您。${NC}"
     exit 0
 }
 
@@ -265,7 +265,3 @@ while true; do
         *) echo -e "${BRed}无效输入${NC}" && sleep 1 ;;
     esac
 done
-EOF
-
-chmod +x toolt.sh
-./toolt.sh
