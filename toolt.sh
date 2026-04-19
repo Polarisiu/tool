@@ -8,6 +8,7 @@ BBlue='\033[1;34m'
 BPurple='\033[1;35m'
 BCyan='\033[1;36m'
 White='\033[1;37m'
+BOrange='\033[1;38;5;208m'
 NC='\033[0m'
 
 
@@ -96,34 +97,32 @@ draw_banner() {
 # 一级主菜单
 main_menu() {
     draw_banner
-    echo -e " ${BBlue}功能分类${NC}"
-    echo -e "  ${BYellow}1. 系统维护${NC}"
-    echo -e "  ${BYellow}2. 网络安全${NC}"
-    echo -e "  ${BYellow}3. 网络检测${NC}"
-    echo -e "  ${BYellow}4. 网络代理${NC}"
-    echo -e "  ${BYellow}5. 网络监控${NC}"
-    echo -e "  ${BYellow}6. 玩具熊${NC}"
-    echo -e "  ${BYellow}8. 更新${NC}"
-    echo -e "  ${BYellow}9. 卸载${NC}"
-    echo -e "  ${BRed}0. 退出${NC}"
+    echo -e "${BYellow}1. 系统维护${NC}"
+    echo -e "${BYellow}2. 网络安全${NC}"
+    echo -e "${BYellow}3. 网络检测${NC}"
+    echo -e "${BYellow}4. 网络代理${NC}"
+    echo -e "${BYellow}5. 网络监控${NC}"
+    echo -e "${BYellow}6. 玩具熊ʕ•ᴥ•ʔ${NC}"
+    echo -e "${BGreen}8. 更新工具箱${NC}"
+    echo -e "${BGreen}9. 卸载工具箱${NC}"
+    echo -e "${BRed}0. 退出${NC}"
 }
 
 # 二级菜单处理逻辑
 menu_system() {
     while true; do
         draw_banner
-        echo -e " ${BGreen}系统维护${NC}"
-        echo -e "  1. 更新系统"
-        echo -e "  2. 系统信息"
-        echo -e "  3. 系统清理"
-        echo -e "  4. 修改主机名"
-        echo -e "  5. 修改Root密码"
-        echo -e "  6. 修改SSH端口"
-        echo -e "  7. 设置SWAP内存"
-        echo -e "  8. 重装系统(DD)"
-        echo -e "  9. 系统重启"
-        echo -e "  ${BRed}0. 返回主菜单${NC}"
-        read -p " 请输入选择: " sub
+        echo -e "${BYellow}1. 更新系统${NC}"
+        echo -e "${BYellow}2. 系统信息${NC}"
+        echo -e "${BYellow}3. 系统清理${NC}"
+        echo -e "${BYellow}4. 修改主机名${NC}"
+        echo -e "${BYellow}5. 修改Root密码${NC}"
+        echo -e "${BYellow}6. 修改SSH端口${NC}"
+        echo -e "${BYellow}7. 设置SWAP内存${NC}"
+        echo -e "${BYellow}8. 重装系统(DD)${NC}"
+        echo -e "${BYellow}9. 系统重启${NC}"
+        echo -e "${BRed}0. 返回主菜单${NC}"
+        read -p "请输入选择: " sub
         case "$sub" in
             1) bash <(curl -sL https://raw.githubusercontent.com/Polarisiu/tool/main/vpsup.sh) ; any_key_to_continue ;;
             2) bash <(curl -sL https://raw.githubusercontent.com/Polarisiu/tool/main/vpsx.sh) ; any_key_to_continue ;;
@@ -142,18 +141,17 @@ menu_system() {
 menu_network() {
     while true; do
         draw_banner
-        echo -e " ${BYellow}网络安全${NC}"
-        echo -e "  1. 开启BBR加速"
-        echo -e "  2. 切换v4/v6"
-        echo -e "  3. 开放所有端口"
-        echo -e "  4. DNS 设置"
-        echo -e "  5. AkileDNS"
-        echo -e "  6. SSH密钥登录"
-        echo -e "  7. Fail2Ban防刷"
-        echo -e "  8. CF WARP"
-        echo -e "  9. EasyTier组网"
-        echo -e "  ${BRed}0. 返回主菜单${NC}"
-        read -p " 请输入选择: " sub
+        echo -e "${BYellow}1. 开启BBR加速"
+        echo -e "${BYellow}2. 切换v4/v6"
+        echo -e "${BYellow}3. 开放所有端口"
+        echo -e "${BYellow}4. DNS 设置"
+        echo -e "${BYellow}5. AkileDNS"
+        echo -e "${BYellow}6. SSH密钥登录"
+        echo -e "${BYellow}7. Fail2Ban防刷"
+        echo -e "${BYellow}8. CF WARP"
+        echo -e "${BYellow}9. EasyTier组网"
+        echo -e "${BRed}0. 返回主菜单${NC}"
+        read -p "请输入选择: " sub
         case "$sub" in
             1) bash <(curl -sL https://raw.githubusercontent.com/Polarisiu/tool/main/BBR.sh) ; any_key_to_continue ;;
             2) bash <(curl -sL https://raw.githubusercontent.com/Polarisiu/tool/main/qhwl.sh) ; any_key_to_continue ;;
@@ -172,12 +170,11 @@ menu_network() {
 menu_test() {
     while true; do
         draw_banner
-        echo -e " ${BCyan}网络检测${NC}"
-        echo -e "  1. 流媒体解锁测试"
-        echo -e "  2. 回程线路测试"
-        echo -e "  3. NodeQuality"
-        echo -e "  ${BRed}0. 返回主菜单${NC}"
-        read -p " 请输入选择: " sub
+        echo -e "${BYellow}1. 流媒体解锁测试"
+        echo -e "${BYellow}2. 回程线路测试"
+        echo -e "${BYellow}3. NodeQuality"
+        echo -e "${BRed}0. 返回主菜单${NC}"
+        read -p "请输入选择: " sub
         case "$sub" in
             1) bash <(curl -L -s https://raw.githubusercontent.com/lmc999/RegionRestrictionCheck/main/check.sh) ; any_key_to_continue ;;
             2) curl https://raw.githubusercontent.com/ludashi2020/backtrace/main/install.sh -sSf | sh ; any_key_to_continue ;;
@@ -190,13 +187,12 @@ menu_test() {
 menu_proxy() {
     while true; do
         draw_banner
-        echo -e " ${BPurple}网络代理${NC}"
-        echo -e "  1. 3x-ui 面板"
-        echo -e "  2. Realm 转发"
-        echo -e "  3. SS-Xray-2go"
-        echo -e "  4. vless-all-in-one"
-        echo -e "  ${BRed}0. 返回主菜单${NC}"
-        read -p " 请输入选择: " sub
+        echo -e "${BYellow}1. 3x-ui 面板"
+        echo -e "${BYellow}2. Realm 转发"
+        echo -e "${BYellow}3. SS-Xray-2go"
+        echo -e "${BYellow}4. vless-all-in-one"
+        echo -e "${BRed}0. 返回主菜单${NC}"
+        read -p "请输入选择: " sub
         case "$sub" in
             1) bash <(curl -sL https://raw.githubusercontent.com/Polarisiu/tool/main/3xui.sh) ; any_key_to_continue ;;
             2) wget -qO- https://raw.githubusercontent.com/zywe03/realm-xwPF/main/xwPF.sh | sudo bash -s install ; any_key_to_continue ;;
@@ -210,11 +206,10 @@ menu_proxy() {
 menu_jk() {
     while true; do
         draw_banner
-        echo -e " ${BPurple}网络监控${NC}"
-        echo -e "  1. 流量狗"
-        echo -e "  2. DDNS"
-        echo -e "  ${BRed}0. 返回主菜单${NC}"
-        read -p " 请输入选择: " sub
+        echo -e "${BYellow}1. 流量狗"
+        echo -e "${BYellow}2. DDNS"
+        echo -e "${BRed}0. 返回主菜单${NC}"
+        read -p "请输入选择: " sub
         case "$sub" in
             1) wget -O port-traffic-dog.sh https://raw.githubusercontent.com/zywe03/realm-xwPF/main/port-traffic-dog.sh && chmod +x port-traffic-dog.sh && ./port-traffic-dog.sh ; any_key_to_continue ;;
             2) bash <(wget -qO- https://raw.githubusercontent.com/mocchen/cssmeihua/mochen/shell/ddns.sh) ; any_key_to_continue ;;
@@ -226,12 +221,11 @@ menu_jk() {
 menu_app() {
     while true; do
         draw_banner
-        echo -e " ${BPurple}玩具熊${NC}"
-        echo -e "  1. Emby反代"
-        echo -e "  2. 关闭哪吒V1SSH"
-        echo -e "  3. 卸载探针"
-        echo -e "  ${BRed}0. 返回主菜单${NC}"
-        read -p " 请输入选择: " sub
+        echo -e "${BYellow}1. Emby反代"
+        echo -e "${BYellow}2. 关闭哪吒V1SSH"
+        echo -e "${BYellow}3. 卸载探针"
+        echo -e "${BRed}0. 返回主菜单${NC}"
+        read -p "请输入选择: " sub
         case "$sub" in
             1) bash <(curl -sL https://raw.githubusercontent.com/Polarisiu/tool/main/Embyfd.sh) ; any_key_to_continue ;;
             2) sed -i 's/disable_command_execute: false/disable_command_execute: true/' /opt/nezha/agent/config.yml && systemctl restart nezha-agent ; any_key_to_continue ;;
@@ -247,7 +241,7 @@ menu_app() {
 
 while true; do
     main_menu
-    read -p " 请输入分类编号 [0-6]: " choice
+    read -p "请输入分类编号: " choice
     case "$choice" in
         1) menu_system ;;
         2) menu_network ;;
