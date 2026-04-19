@@ -33,22 +33,25 @@ install_shortcut_silent() {
         # 让当前会话立即生效
         alias t="$script_path" 2>/dev/null
         alias T="$script_path" 2>/dev/null
+        echo -e "${BYellow}快捷键 T/t 已添加。若要立即生效，请执行：${White}source ~/.bashrc${NC}"
     fi
 }
 
-# --- 2. 脚本更新并自动重载 ---
 update_script() {
     echo -e "${BBlue}正在从服务器获取最新版本...${NC}"
-    curl -sL "$SCRIPT_URL" -o tools.sh.tmp
-    if [ $? -eq 0 ] && [ -s tools.sh.tmp ]; then
-        mv tools.sh.tmp "$0"
+    # 这里的 "$0" 代表脚本自身，确保下载覆盖的是正确的文件
+    curl -sL "$SCRIPT_URL" -o "$0.tmp"
+    if [ $? -eq 0 ] && [ -s "$0.tmp" ]; then
+        mv "$0.tmp" "$0"
         chmod +x "$0"
         echo -e "${BGreen}更新完成!${NC}"
         sleep 1
-        exec "$0"  # 关键点：使用 exec 自动替换当前进程，实现自动重载
+        # 自动重载，这样用户就不需要手动再输入 t 了
+        exec bash "$0"
     else
-        echo -e "${BRed}更新失败，请检查网络连接或 URL 是否有效。${NC}"
-        rm -f tools.sh.tmp
+        echo -e "${BRed}更新失败，请检查网络连接。${NC}"
+        rm -f "$0.tmp"
+        any_key_to_continue
     fi
 }
 
