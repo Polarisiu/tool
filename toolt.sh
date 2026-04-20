@@ -54,6 +54,34 @@ any_key_to_continue() {
     read -n 1 -s -r -p ""
 }
 
+progress_bar() {
+    local percent=$1
+    local width=20
+
+    # 确保百分比不超标
+    [ "$percent" -gt 100 ] && percent=100
+    [ "$percent" -lt 0 ] && percent=0
+
+    local filled=$((percent * width / 100))
+    local empty=$((width - filled))
+
+    # 根据百分比选颜色
+    if [ "$percent" -lt 50 ]; then
+        color="\033[32m" # 绿色
+    elif [ "$percent" -lt 80 ]; then
+        color="\033[33m" # 黄色
+    else
+        color="\033[31m" # 红色
+    fi
+
+    # 关键修改：直接构造固定长度的 bar 字符串
+    local bar_chars=""
+    for ((i=0; i<filled; i++)); do bar_chars+="█"; done
+    for ((i=0; i<empty; i++)); do bar_chars+="░"; done
+
+    # 输出颜色 + 20位进度条 + 重置颜色
+    printf "${color}%s\033[0m" "$bar_chars"
+}
 
 # 单位自动转换：MB 转为 M 或 G
 format_size() {
@@ -92,21 +120,46 @@ get_sys_status() {
 
     # 3. CPU 使用率
     CPU_IDLE=$(top -bn1 | grep "Cpu(s)" | awk -F',' '{for(i=1;i<=NF;i++) if($i ~ /id/) print $i}' | awk '{print $1}' | cut -d. -f1 | tr -d '[:space:]')
-    CPU_VAL=$((100 - CPU_IDLE))
+    CPU_VAL=$(top -bn1 | awk -F'id,' '/Cpu/ {split($1,a,","); split(a[length(a)],b," "); print 100 - b[length(b)]}' | cut -d. -f1)
     CPU_PCT="${CPU_VAL}%"
 
     # 4. 系统状态动态判断
     if [ "$CPU_VAL" -gt 90 ] || [ "$MEM_PCT" -gt 90 ] || [ "$DISK_VAL" -gt 90 ] || [ "$SWAP_PCT" -gt 80 ]; then
-        SYS_STATE="${BRed}危险${NC}"
+        SYS_STATE="${BRed}危险 ⚡${NC}"
     elif [ "$CPU_VAL" -gt 70 ] || [ "$MEM_PCT" -gt 70 ] || [ "$DISK_VAL" -gt 70 ]; then
-        SYS_STATE="${BYellow}注意${NC}"
+        SYS_STATE="${BYellow}注意 ⚠️${NC}"
     else
-        SYS_STATE="${BGreen}正常${NC}"
+        SYS_STATE="${BGreen}正常 ✔${NC}"
     fi
 
     # 5. 其他信息
     OS=$(grep -w "PRETTY_NAME" /etc/os-release | cut -d '"' -f2)
+    # 1. 尝试多渠道获取 CPU 型号
+    local raw_cpu=""
+    raw_cpu=$(grep -m1 "model name" /proc/cpuinfo 2>/dev/null | cut -d: -f2)
+    [ -z "$raw_cpu" ] && raw_cpu=$(grep -m1 "Hardware" /proc/cpuinfo 2>/dev/null | cut -d: -f2)
+    [ -z "$raw_cpu" ] && raw_cpu=$(lscpu 2>/dev/null | grep "Model name" | cut -d: -f2)
+
+    # 2. 精简清理逻辑 (合并 sed 指令提高效率)
+    # 移除 @...GHz, CPU, Processor, Intel, AMD, 以及括号内容(可选)
+    CPU_MODEL=$(echo "$raw_cpu" | sed -E \
+        -e 's/\(R\)|\(TM\)//g' \
+        -e 's/@.*//g' \
+        -e 's/[Cc][Pp][Uu]//g' \
+        -e 's/[Pp]rocessor//g' \
+        -e 's/[0-9]+-Core//g' \
+        -e 's/^[[:space:]]*|[[:space:]]*$//g' \
+        -e 's/[[:space:]]+/ /g')
+
+    # 3. 最终格式化
     ARCH=$(uname -m)
+    [ -z "$CPU_MODEL" ] && CPU_MODEL="Unknown CPU"
+    CPU_INFO="${CPU_MODEL} (${ARCH})"
+    TIME_NOW=$(date "+%Y-%m-%d %H:%M:%S")
+    # 自动获取时区
+    TIME_ZONE=$(cat /etc/timezone 2>/dev/null || timedatectl | grep "Time zone" | awk '{print $3}')
+    ARCH=$(uname -m)
+
     
     total_seconds=$(cut -d. -f1 /proc/uptime)
     d=$((total_seconds / 86400))
@@ -123,33 +176,47 @@ get_sys_status() {
 draw_banner() {
     clear
     echo -e "${BCyan}"
-    echo "     _______ ____   ____  _      "
-    echo "    |__   __/ __ \ / __ \| |     "
-    echo "       | | | |  | | |  | | |     "
-    echo "       | | | |  | | |  | | |     "
-    echo "       | | | |__| | |__| | |____ "
-    echo "       |_|  \____/ \____/|______|"
+    echo "████████╗ ██████╗  ██████╗ ██╗  ████████╗"
+    echo "╚══██╔══╝██╔═══██╗██╔═══██╗██║  ╚══██╔══╝"
+    echo "   ██║   ██║   ██║██║   ██║██║     ██║   "
+    echo "   ██║   ██║   ██║██║   ██║██║     ██║   "
+    echo "   ██║   ╚██████╔╝╚██████╔╝███████╗██║   "
+    echo "   ╚═╝    ╚═════╝  ╚═════╝ ╚══════╝╚═╝   "
     echo -e "  ${BYellow}>> VPS 综合管理工具箱(快捷指令:T/t) <<${NC}"
     
     get_sys_status
-    echo -e "${BCyan}┌──────────────────────────────────────────┐${NC}"
-    echo -e "     ${BOrange}系统状态：${NC}${SYS_STATE}\n"                                    
-    printf "     ${BOrange}内存占用：${NC}%-38s \n" "${MEM_USED_STR} / ${MEM_TOTAL_STR} (${MEM_PCT}%)"
-    printf "     ${BOrange}虚拟内存：${NC}%-38s \n" "${SWAP_USED_STR} / ${SWAP_TOTAL_STR} (${SWAP_PCT}%)"
-    printf "     ${BOrange}磁盘占用：${NC}%-38s \n" "${DISK_USED} / ${DISK_TOTAL} (${DISK_PCT})"
-    printf "     ${BOrange}CPU 使用：${NC}%-38s \n" "${CPU_PCT}"
-    echo -e "${BCyan}└──────────────────────────────────────────┘${NC}"
+    echo -e "${BCyan}┌──────────────────────────────────────────────┐${NC}"
+    echo -e "  ${BOrange}系统状态：${NC}${SYS_STATE}\n"                                    
+    # 统一格式：标签(12字节) + 进度条(20个符号) + 间隔(2空格) + 数据(固定列宽)
+    printf "  ${BOrange}内存占用：${NC}"
+    progress_bar "$MEM_PCT"
+    printf "  %-18s\n" "${MEM_USED_STR} / ${MEM_TOTAL_STR}"
+
+    printf "  ${BOrange}虚拟内存：${NC}"
+    progress_bar "$SWAP_PCT"
+    printf "  %-18s\n" "${SWAP_USED_STR} / ${SWAP_TOTAL_STR}"
+
+    printf "  ${BOrange}磁盘占用：${NC}"
+    progress_bar "$DISK_VAL"
+    printf "  %-18s\n" "${DISK_USED} / ${DISK_TOTAL}"
+
+    printf "  ${BOrange}CPU 使用：${NC}"
+    progress_bar "$CPU_VAL"
+    printf "  %-18s\n" "${CPU_PCT}"
+    echo -e "${BCyan}└──────────────────────────────────────────────┘${NC}"
     echo -e " ${BOrange}💻 系统 :${NC} ${BOrange}$OS${NC}"
-    echo -e " ${BOrange}🧩 架构 :${NC} ${BOrange}$ARCH${NC}"
+    echo -e " ${BOrange}🧩 架构 :${NC} ${BOrange}$CPU_INFO${NC}"
+    echo -e " ${BOrange}🌍 时区 :${NC} ${BOrange}$TIME_ZONE${NC}"
+    echo -e " ${BOrange}🕒 时间 :${NC} ${BOrange}$TIME_NOW${NC}"
     echo -e " ${BOrange}🚀 运行 :${NC} ${BOrange}$UPTIME${NC}"
-    echo -e "${BCyan}────────────────────────────────────────────${NC}"
+    echo -e "${BCyan}────────────────────────────────────────────────${NC}"
 }
 
 # 一级主菜单
 main_menu() {
     draw_banner
-    echo -e "${BYellow}▶1. 系统维护${NC}"
-    echo -e "${BYellow}▶2. 网络安全${NC}"
+    echo -e "${BYellow}▶1. 系统设置${NC}"
+    echo -e "${BYellow}▶2. 网络设置${NC}"
     echo -e "${BYellow}▶3. 网络检测${NC}"
     echo -e "${BYellow}▶4. 网络代理${NC}"
     echo -e "${BYellow}▶5. 网络监控${NC}"
@@ -163,18 +230,20 @@ main_menu() {
 menu_system() {
     while true; do
         draw_banner
-        echo -e "${BYellow}▶1. 更新系统${NC}"
-        echo -e "${BYellow}▶2. 系统信息${NC}"
-        echo -e "${BYellow}▶3. 系统清理${NC}"
-        echo -e "${BYellow}▶4. 修改主机名${NC}"
-        echo -e "${BYellow}▶5. 修改Root密码${NC}"
-        echo -e "${BYellow}▶6. 修改SSH端口${NC}"
-        echo -e "${BYellow}▶7. 设置SWAP内存${NC}"
-        echo -e "${BYellow}▶8. 重装系统(DD)${NC}"
-        echo -e "${BYellow}▶9. 系统重启${NC}"
-        echo -e "${BOrange}▶X. 退出${NC}"
-        echo -e "${BRed}▶0. 返回主菜单${NC}"
-        read -p "请输入选择: " sub
+        echo -e "${BYellow}▶ 1. 更新系统${NC}"
+        echo -e "${BYellow}▶ 2. 系统信息${NC}"
+        echo -e "${BYellow}▶ 3. 系统清理${NC}"
+        echo -e "${BYellow}▶ 4. 修改主机名${NC}"
+        echo -e "${BYellow}▶ 5. 修改Root密码${NC}"
+        echo -e "${BYellow}▶ 6. 修改SSH端口${NC}"
+        echo -e "${BYellow}▶ 7. 设置SWAP内存${NC}"
+        echo -e "${BYellow}▶ 8. SSH密钥登录"
+        echo -e "${BYellow}▶ 9. Fail2Ban"
+        echo -e "${BYellow}▶10. 重装系统(DD)${NC}"
+        echo -e "${BYellow}▶11. 系统重启${NC}"
+        echo -e "${BOrange}▶ X. 退出${NC}"
+        echo -e "${BRed}▶ 0. 返回主菜单${NC}"
+        read -r -p $'\033[1;36m请输入选择: \033[0m' sub
         case "$sub" in
             1) bash <(curl -sL https://raw.githubusercontent.com/Polarisiu/tool/main/vpsup.sh) ; any_key_to_continue ;;
             2) bash <(curl -sL https://raw.githubusercontent.com/Polarisiu/tool/main/vpsx.sh) ; any_key_to_continue ;;
@@ -183,8 +252,10 @@ menu_system() {
             5) sudo passwd root ; any_key_to_continue ;;
             6) bash <(curl -sL https://raw.githubusercontent.com/Polarisiu/tool/main/vpssshdk.sh) ; any_key_to_continue ;;
             7) bash <(curl -sL https://raw.githubusercontent.com/Polarisiu/tool/main/vpsswap.sh) ; any_key_to_continue ;;
-            8) bash <(curl -sL https://raw.githubusercontent.com/Polarisiu/tool/main/VPSDD.sh) ; any_key_to_continue ;;
-            9) sudo reboot ;;
+            8) bash <(curl -sL https://raw.githubusercontent.com/Polarisiu/tool/main/sshkey.sh) ; any_key_to_continue ;;
+            9) bash <(curl -sL https://raw.githubusercontent.com/Polarisiu/tool/main/Fail2Ban.sh) ; any_key_to_continue ;;
+            10) bash <(curl -sL https://raw.githubusercontent.com/Polarisiu/tool/main/VPSDD.sh) ; any_key_to_continue ;;
+            11) sudo reboot ;;
             x|X) exit 0 ;;
             0) break ;;
         esac
@@ -199,23 +270,19 @@ menu_network() {
         echo -e "${BYellow}▶3. 开放所有端口"
         echo -e "${BYellow}▶4. DNS设置"
         echo -e "${BYellow}▶5. AkileDNS"
-        echo -e "${BYellow}▶6. SSH密钥登录"
-        echo -e "${BYellow}▶7. Fail2Ban"
-        echo -e "${BYellow}▶8. CFWARP"
-        echo -e "${BYellow}▶9. EasyTier组网"
+        echo -e "${BYellow}▶6. CFWARP"
+        echo -e "${BYellow}▶7. EasyTier组网"
         echo -e "${BOrange}▶X. 退出${NC}"
         echo -e "${BRed}▶0. 返回主菜单${NC}"
-        read -p "请输入选择: " sub
+        read -r -p $'\033[1;36m请输入选择: \033[0m' sub
         case "$sub" in
             1) bash <(curl -sL https://raw.githubusercontent.com/Polarisiu/tool/main/BBR.sh) ; any_key_to_continue ;;
             2) bash <(curl -sL https://raw.githubusercontent.com/Polarisiu/tool/main/qhwl.sh) ; any_key_to_continue ;;
             3) bash <(curl -sL https://raw.githubusercontent.com/Polarisiu/tool/main/opendk.sh) ; any_key_to_continue ;;
             4) bash <(curl -sL https://raw.githubusercontent.com/Polarisiu/tool/main/DNS.sh) ; any_key_to_continue ;;
             5) wget -qO- https://raw.githubusercontent.com/akile-network/aktools/refs/heads/main/akdns.sh | bash ; any_key_to_continue ;;
-            6) bash <(curl -sL https://raw.githubusercontent.com/Polarisiu/tool/main/sshkey.sh) ; any_key_to_continue ;;
-            7) bash <(curl -sL https://raw.githubusercontent.com/Polarisiu/tool/main/Fail2Ban.sh) ; any_key_to_continue ;;
-            8) wget -N https://gitlab.com/fscarmen/warp/-/raw/main/menu.sh && bash menu.sh ; any_key_to_continue ;;
-            9) bash <(curl -sL https://raw.githubusercontent.com/ceocok/c.cococ/refs/heads/main/easytier.sh) ; any_key_to_continue ;;
+            6) wget -N https://gitlab.com/fscarmen/warp/-/raw/main/menu.sh && bash menu.sh ; any_key_to_continue ;;
+            7) bash <(curl -sL https://raw.githubusercontent.com/ceocok/c.cococ/refs/heads/main/easytier.sh) ; any_key_to_continue ;;
             x|X) exit 0 ;;
             0) break ;;
         esac
@@ -230,7 +297,7 @@ menu_test() {
         echo -e "${BYellow}▶3. NodeQuality"
         echo -e "${BOrange}▶X. 退出${NC}"
         echo -e "${BRed}▶0. 返回主菜单${NC}"
-        read -p "请输入选择: " sub
+        read -r -p $'\033[1;36m请输入选择: \033[0m' sub
         case "$sub" in
             1) bash <(curl -L -s https://raw.githubusercontent.com/lmc999/RegionRestrictionCheck/main/check.sh) ; any_key_to_continue ;;
             2) curl https://raw.githubusercontent.com/ludashi2020/backtrace/main/install.sh -sSf | sh ; any_key_to_continue ;;
@@ -250,7 +317,7 @@ menu_proxy() {
         echo -e "${BYellow}▶4. vless-all-in-one"
         echo -e "${BOrange}▶X. 退出${NC}"
         echo -e "${BRed}▶0. 返回主菜单${NC}"
-        read -p "请输入选择: " sub
+        read -r -p $'\033[1;36m请输入选择: \033[0m' sub
         case "$sub" in
             1) bash <(curl -sL https://raw.githubusercontent.com/Polarisiu/tool/main/3xui.sh) ; any_key_to_continue ;;
             2) wget -qO- https://raw.githubusercontent.com/zywe03/realm-xwPF/main/xwPF.sh | sudo bash -s install ; any_key_to_continue ;;
@@ -269,7 +336,7 @@ menu_jk() {
         echo -e "${BYellow}▶2. DDNS"
         echo -e "${BOrange}▶X. 退出${NC}"
         echo -e "${BRed}▶0. 返回主菜单${NC}"
-        read -p "请输入选择: " sub
+        read -r -p $'\033[1;36m请输入选择: \033[0m' sub
         case "$sub" in
             1) wget -O port-traffic-dog.sh https://raw.githubusercontent.com/zywe03/realm-xwPF/main/port-traffic-dog.sh && chmod +x port-traffic-dog.sh && ./port-traffic-dog.sh ; any_key_to_continue ;;
             2) bash <(wget -qO- https://raw.githubusercontent.com/mocchen/cssmeihua/mochen/shell/ddns.sh) ; any_key_to_continue ;;
@@ -287,7 +354,7 @@ menu_app() {
         echo -e "${BYellow}▶3. 卸载探针"
         echo -e "${BOrange}▶X. 退出${NC}"
         echo -e "${BRed}▶0. 返回主菜单${NC}"
-        read -p "请输入选择: " sub
+        read -r -p $'\033[1;36m请输入选择: \033[0m' sub
         case "$sub" in
             1) bash <(curl -sL https://raw.githubusercontent.com/Polarisiu/tool/main/Embyfd.sh) ; any_key_to_continue ;;
             2) sed -i 's/disable_command_execute: false/disable_command_execute: true/' /opt/nezha/agent/config.yml && systemctl restart nezha-agent ; any_key_to_continue ;;
@@ -303,7 +370,7 @@ menu_app() {
 
 while true; do
     main_menu
-    read -p "请输入菜单编号: " choice
+    read -r -p $'\033[1;36m请输入菜单编号: \033[0m' choice
     case "$choice" in
         1) menu_system ;;
         2) menu_network ;;
