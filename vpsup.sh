@@ -31,6 +31,19 @@ if [ "$OS_ID" = "alpine" ]; then
     echo -e "${YELLOW}🚀 Alpine 极简更新...${RESET}"
     apk update && apk upgrade
     apk add --no-cache bash curl wget vim tar sudo git gzip openssl openssh ca-certificates tzdata
+    
+    # ✅ Alpine 专用时区设置逻辑
+    echo -e "${YELLOW}🌏 配置时区为 上海 (Asia/Shanghai)...${RESET}"
+    
+    # 先删除旧文件，防止 cp 或 ln 报错
+    rm -f /etc/localtime
+    
+    # 使用软链接，这是 Linux 通用标准
+    ln -sf /usr/share/zoneinfo/Asia/Shanghai /etc/localtime
+    
+    # 写入配置文件
+    echo "Asia/Shanghai" > /etc/timezone
+    
     echo -e "${GREEN}✅ Alpine 更新完成${RESET}"
     echo -e "${YELLOW}当前时间: $(date +'%Y年%m月%d日 %H:%M:%S')${RESET}"
     exit 0
