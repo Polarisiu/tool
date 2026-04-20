@@ -92,6 +92,40 @@ format_size() {
     fi
 }
 
+
+# ===============================
+# 获取当前时区（跨系统兼容）
+# ===============================
+get_timezone() {
+    # 1️⃣ systemd 环境，屏蔽错误
+    if command -v timedatectl &>/dev/null; then
+        tz=$(timedatectl show -p Timezone --value 2>/dev/null)
+        [[ -n "$tz" ]] && echo "$tz" && return
+    fi
+
+    # 2️⃣ /etc/timezone 文件（Debian）
+    if [[ -f /etc/timezone ]]; then
+        tz=$(cat /etc/timezone)
+        [[ -n "$tz" ]] && echo "$tz" && return
+    fi
+
+    # 3️⃣ /etc/localtime 符号链接（RedHat / CentOS）
+    if [[ -L /etc/localtime ]]; then
+        tz=$(readlink /etc/localtime | sed 's#.*/zoneinfo/##')
+        [[ -n "$tz" ]] && echo "$tz" && return
+    fi
+
+    # 4️⃣ /etc/localtime 文件内容匹配（minimal / docker / chroot）
+    if [[ -f /etc/localtime ]]; then
+        tz=$(strings /etc/localtime 2>/dev/null | grep -E '^[A-Z][a-z]+/[A-Z][a-zA-Z_]+$' | head -n1)
+        [[ -n "$tz" ]] && echo "$tz" && return
+    fi
+
+    # 5️⃣ 兜底
+    echo "未知"
+}
+
+
 get_sys_status() {
     # 1. 内存与虚拟内存
     MEM_TOTAL_MB=$(free -m | awk '/Mem:/ {print $2}')
@@ -155,11 +189,9 @@ get_sys_status() {
     [ -z "$CPU_MODEL" ] && CPU_MODEL="Unknown CPU"
     CPU_INFO="${CPU_MODEL} (${ARCH})"
     TIME_NOW=$(date "+%Y-%m-%d %H:%M:%S")
-    # 自动获取时区
-    TIME_ZONE=$(cat /etc/timezone 2>/dev/null || timedatectl | grep "Time zone" | awk '{print $3}')
-    ARCH=$(uname -m)
+    TIME_ZONE=$(get_timezone)
 
-    
+
     total_seconds=$(cut -d. -f1 /proc/uptime)
     d=$((total_seconds / 86400))
     h=$(( (total_seconds % 86400) / 3600 ))
