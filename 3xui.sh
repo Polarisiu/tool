@@ -23,7 +23,7 @@ case "$OS" in
         # 确保 Alpine 安装了基础依赖
         apk add --no-cache curl bash
         # 执行 Alpine 适配版脚本
-        bash <(curl -sL https://raw.githubusercontent.com/sistarry/toolbox/main/Alpine/3xuiAlpine.sh)
+        bash <(curl -sL https://raw.githubusercontent.com/Polarisiu/tool/main/3xuiAlpine.sh)
         ;;
     debian|ubuntu|centos|rocky|almalinux|fedora)
         echo -e "${GREEN}检测到系统为 $OS，正在使用原版 3x-ui 安装脚本...${RESET}"
