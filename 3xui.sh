@@ -24,7 +24,7 @@ case "$OS" in
         bash <(curl -sL https://raw.githubusercontent.com/Polarisiu/tool/main/3xuiAlpine.sh)
         ;;
     debian|ubuntu|centos|rocky|almalinux|fedora)
-        echo -e "${GREEN}检测到系统为 $OS，正在使用原版 3x-ui 安装脚本...${RESET}"
+        echo -e "${GREEN}检测到系统为 $OS，正在使用原版 3X-UI 安装脚本...${RESET}"
         # 执行原版脚本
         bash <(curl -Ls https://raw.githubusercontent.com/mhsanaei/3x-ui/master/install.sh)
         ;;
