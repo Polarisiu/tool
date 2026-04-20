@@ -54,49 +54,69 @@ any_key_to_continue() {
     read -n 1 -s -r -p ""
 }
 
+
+# 单位自动转换：MB 转为 M 或 G
+format_size() {
+    local size_mb=$1
+    if [ "$size_mb" -ge 1024 ]; then
+        echo "$(awk "BEGIN {printf \"%.1f\", $size_mb/1024}")G"
+    else
+        echo "${size_mb}M"
+    fi
+}
+
 get_sys_status() {
-    # 1. 内存与 Swap
-    MEM_TOTAL=$(free -m | awk '/Mem:/ {print $2}')
-    MEM_USED=$(free -m | awk '/Mem:/ {print $3}')
-    MEM_PCT=$((MEM_USED * 100 / (MEM_TOTAL + 1)))
+    # 1. 内存与虚拟内存
+    MEM_TOTAL_MB=$(free -m | awk '/Mem:/ {print $2}')
+    MEM_USED_MB=$(free -m | awk '/Mem:/ {print $3}')
+    MEM_PCT=$((MEM_USED_MB * 100 / (MEM_TOTAL_MB + 1)))
+    MEM_USED_STR=$(format_size $MEM_USED_MB)
+    MEM_TOTAL_STR=$(format_size $MEM_TOTAL_MB)
 
-    SWAP_TOTAL=$(free -m | awk '/Swap:/ {print $2}')
-    SWAP_USED=$(free -m | awk '/Swap:/ {print $3}')
-    [ "$SWAP_TOTAL" -gt 0 ] && SWAP_PCT=$((SWAP_USED * 100 / SWAP_TOTAL)) || SWAP_PCT=0
+    SWAP_TOTAL_MB=$(free -m | awk '/Swap:/ {print $2}')
+    SWAP_USED_MB=$(free -m | awk '/Swap:/ {print $3}')
+    if [ "$SWAP_TOTAL_MB" -gt 0 ]; then
+        SWAP_PCT=$((SWAP_USED_MB * 100 / SWAP_TOTAL_MB))
+    else
+        SWAP_PCT=0
+    fi
+    SWAP_USED_STR=$(format_size $SWAP_USED_MB)
+    SWAP_TOTAL_STR=$(format_size $SWAP_TOTAL_MB)
 
-    # 2. 磁盘 (去掉 %)
+    # 2. 磁盘计算
     DISK_TOTAL=$(df -h / | awk '/\// {print $2}' | tail -n 1)
     DISK_USED=$(df -h / | awk '/\// {print $3}' | tail -n 1)
     DISK_PCT_STR=$(df -h / | awk '/\// {print $5}' | tail -n 1)
     DISK_VAL=$(echo "$DISK_PCT_STR" | tr -d '%')
     DISK_PCT=$DISK_PCT_STR
 
-    # 3. CPU 逻辑
-    CPU_IDLE=$(top -bn1 | grep "Cpu(s)" | awk -F',' '{print $4}' | awk '{print $1}' | cut -d. -f1 | tr -d '[:space:]')
+    # 3. CPU 使用率
+    CPU_IDLE=$(top -bn1 | grep "Cpu(s)" | awk -F',' '{for(i=1;i<=NF;i++) if($i ~ /id/) print $i}' | awk '{print $1}' | cut -d. -f1 | tr -d '[:space:]')
     CPU_VAL=$((100 - CPU_IDLE))
     CPU_PCT="${CPU_VAL}%"
 
-    # 4. 状态判断
-    if [ "$CPU_VAL" -gt 90 ] || [ "$MEM_PCT" -gt 90 ] || [ "$SWAP_PCT" -gt 80 ]; then
+    # 4. 系统状态动态判断
+    if [ "$CPU_VAL" -gt 90 ] || [ "$MEM_PCT" -gt 90 ] || [ "$DISK_VAL" -gt 90 ] || [ "$SWAP_PCT" -gt 80 ]; then
         SYS_STATE="${BRed}危险${NC}"
-    elif [ "$CPU_VAL" -gt 70 ] || [ "$MEM_PCT" -gt 70 ]; then
+    elif [ "$CPU_VAL" -gt 70 ] || [ "$MEM_PCT" -gt 70 ] || [ "$DISK_VAL" -gt 70 ]; then
         SYS_STATE="${BYellow}注意${NC}"
     else
         SYS_STATE="${BGreen}正常${NC}"
     fi
 
-    # 5. 其他信息 (折算总天数的 UPTIME)
+    # 5. 其他信息
     OS=$(grep -w "PRETTY_NAME" /etc/os-release | cut -d '"' -f2)
-    total_seconds=$(cut -d. -f1 /proc/uptime)
-    days=$((total_seconds / 86400))
-    hours=$(( (total_seconds % 86400) / 3600 ))
-    mins=$(( (total_seconds % 3600) / 60 ))
-    UPTIME=""
-    [ $days -gt 0 ] && UPTIME+="${days}天"
-    [ $hours -gt 0 ] && UPTIME+="${hours}小时"
-    [ $mins -gt 0 ] && UPTIME+="${mins}分钟"
-    [ -z "$UPTIME" ] && UPTIME="刚刚启动"
     ARCH=$(uname -m)
+    
+    total_seconds=$(cut -d. -f1 /proc/uptime)
+    d=$((total_seconds / 86400))
+    h=$(( (total_seconds % 86400) / 3600 ))
+    m=$(( (total_seconds % 3600) / 60 ))
+    UPTIME=""
+    [ $d -gt 0 ] && UPTIME+="${d}天"
+    [ $h -gt 0 ] && UPTIME+="${h}小时"
+    [ $m -gt 0 ] && UPTIME+="${m}分钟"
+    [ -z "$UPTIME" ] && UPTIME="刚刚启动"
 }
 
 # 顶部看板
@@ -114,8 +134,8 @@ draw_banner() {
     get_sys_status
     echo -e "${BCyan}┌──────────────────────────────────────────┐${NC}"
     echo -e "     系统状态：${SYS_STATE}\n"                                    
-    printf "     内存占用：%-38s \n" "${MEM_USED}M / ${MEM_TOTAL}M (${MEM_PCT}%)"
-    printf "     虚拟内存：%-38s \n" "${SWAP_USED}M / ${SWAP_TOTAL}M (${SWAP_PCT}%)"
+    printf "     内存占用：%-38s \n" "${MEM_USED_STR} / ${MEM_TOTAL_STR} (${MEM_PCT}%)"
+    printf "     虚拟内存：%-38s \n" "${SWAP_USED_STR} / ${SWAP_TOTAL_STR} (${SWAP_PCT}%)"
     printf "     磁盘占用：%-38s \n" "${DISK_USED} / ${DISK_TOTAL} (${DISK_PCT})"
     printf "     CPU 使用：%-38s \n" "${CPU_PCT}"
     echo -e "${BCyan}└──────────────────────────────────────────┘${NC}"
