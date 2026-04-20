@@ -20,8 +20,6 @@ fi
 case "$OS" in
     alpine)
         echo -e "${YELLOW}检测到系统为 Alpine Linux，正在使用 Alpine 专用安装脚本...${RESET}"
-        # 确保 Alpine 安装了基础依赖
-        apk add --no-cache curl bash
         # 执行 Alpine 适配版脚本
         bash <(curl -sL https://raw.githubusercontent.com/Polarisiu/tool/main/3xuiAlpine.sh)
         ;;
