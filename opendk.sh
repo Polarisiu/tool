@@ -93,4 +93,3 @@ fi
 
 echo -e "${GREEN}----------------------------------${RESET}"
 echo -e "${GREEN}✅ 所有端口已成功开放！${RESET}"
-echo -e "${YELLOW}当前时间: $(date +'%Y年%m月%d日 %H:%M:%S')${RESET}"
