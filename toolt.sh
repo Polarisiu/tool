@@ -200,7 +200,7 @@ menu_network() {
         echo -e "${BYellow}▶4. DNS设置"
         echo -e "${BYellow}▶5. AkileDNS"
         echo -e "${BYellow}▶6. SSH密钥登录"
-        echo -e "${BYellow}▶7. Fail2Ban防刷"
+        echo -e "${BYellow}▶7. Fail2Ban"
         echo -e "${BYellow}▶8. CFWARP"
         echo -e "${BYellow}▶9. EasyTier组网"
         echo -e "${BOrange}▶X. 退出${NC}"
