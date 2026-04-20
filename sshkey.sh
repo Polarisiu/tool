@@ -10,7 +10,7 @@ YELLOW="\033[33m"
 RESET="\033[0m"
 
 # 1. 交互确认
-echo -e "${RED}⚠️  警告：此操作将生成 Ed25519 密钥并彻底禁用密码登录！${RESET}"
+echo -e "${RED}警告：此操作将生成 Ed25519 密钥并彻底禁用密码登录！${RESET}"
 read -p "是否继续？(y/n): " confirm
 if [[ ! "$confirm" =~ ^[Yy]$ ]]; then
     echo -e "${YELLOW}已取消操作。${RESET}"
