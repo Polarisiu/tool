@@ -133,15 +133,15 @@ draw_banner() {
     
     get_sys_status
     echo -e "${BCyan}┌──────────────────────────────────────────┐${NC}"
-    echo -e "     系统状态：${SYS_STATE}\n"                                    
-    printf "     内存占用：%-38s \n" "${MEM_USED_STR} / ${MEM_TOTAL_STR} (${MEM_PCT}%)"
-    printf "     虚拟内存：%-38s \n" "${SWAP_USED_STR} / ${SWAP_TOTAL_STR} (${SWAP_PCT}%)"
-    printf "     磁盘占用：%-38s \n" "${DISK_USED} / ${DISK_TOTAL} (${DISK_PCT})"
-    printf "     CPU 使用：%-38s \n" "${CPU_PCT}"
+    echo -e "     ${BOrange}系统状态：${NC}${SYS_STATE}\n"                                    
+    printf "     ${BOrange}内存占用：${NC}%-38s \n" "${MEM_USED_STR} / ${MEM_TOTAL_STR} (${MEM_PCT}%)"
+    printf "     ${BOrange}虚拟内存：${NC}%-38s \n" "${SWAP_USED_STR} / ${SWAP_TOTAL_STR} (${SWAP_PCT}%)"
+    printf "     ${BOrange}磁盘占用：${NC}%-38s \n" "${DISK_USED} / ${DISK_TOTAL} (${DISK_PCT})"
+    printf "     ${BOrange}CPU 使用：${NC}%-38s \n" "${CPU_PCT}"
     echo -e "${BCyan}└──────────────────────────────────────────┘${NC}"
-    echo -e " ${BOrange}💻 系统 :${NC} ${BYellow}$OS${NC}"
-    echo -e " ${BOrange}🧩 架构 :${NC} ${BYellow}$ARCH${NC}"
-    echo -e " ${BOrange}🚀 运行 :${NC} ${BYellow}$UPTIME${NC}"
+    echo -e " ${BOrange}💻 系统 :${NC} ${BOrange}$OS${NC}"
+    echo -e " ${BOrange}🧩 架构 :${NC} ${BOrange}$ARCH${NC}"
+    echo -e " ${BOrange}🚀 运行 :${NC} ${BOrange}$UPTIME${NC}"
     echo -e "${BCyan}────────────────────────────────────────────${NC}"
 }
 
@@ -303,7 +303,7 @@ menu_app() {
 
 while true; do
     main_menu
-    read -p "请输入分类编号: " choice
+    read -p "请输入菜单编号: " choice
     case "$choice" in
         1) menu_system ;;
         2) menu_network ;;
