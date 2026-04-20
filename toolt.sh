@@ -208,7 +208,7 @@ draw_banner() {
     echo -e " ${BOrange}🧩 架构 :${NC} ${BOrange}$CPU_INFO${NC}"
     echo -e " ${BOrange}🌍 时区 :${NC} ${BOrange}$TIME_ZONE${NC}"
     echo -e " ${BOrange}🕒 时间 :${NC} ${BOrange}$TIME_NOW${NC}"
-    echo -e " ${BOrange}🚀 运行 :${NC} ${BOrange}$UPTIME${NC}"
+    echo -e " ${BOrange}🚀 运行 :${NC} ${BYellow}$UPTIME${NC}"
     echo -e "${BCyan}────────────────────────────────────────────────${NC}"
 }
 
@@ -265,7 +265,7 @@ menu_system() {
 menu_network() {
     while true; do
         draw_banner
-        echo -e "${BYellow}▶1. 开启BBR"
+        echo -e "${BYellow}▶1. BBR调优"
         echo -e "${BYellow}▶2. 切换v4/v6"
         echo -e "${BYellow}▶3. 开放所有端口"
         echo -e "${BYellow}▶4. DNS设置"
@@ -292,9 +292,10 @@ menu_network() {
 menu_test() {
     while true; do
         draw_banner
-        echo -e "${BYellow}▶1. 流媒体解锁测试"
-        echo -e "${BYellow}▶2. 回程线路测试"
+        echo -e "${BYellow}▶1. 流媒体解锁检测"
+        echo -e "${BYellow}▶2. 回程线路检测"
         echo -e "${BYellow}▶3. NodeQuality"
+        echo -e "${BYellow}▶4. 融合怪"
         echo -e "${BOrange}▶X. 退出${NC}"
         echo -e "${BRed}▶0. 返回主菜单${NC}"
         read -r -p $'\033[1;36m请输入选择: \033[0m' sub
@@ -302,6 +303,7 @@ menu_test() {
             1) bash <(curl -L -s https://raw.githubusercontent.com/lmc999/RegionRestrictionCheck/main/check.sh) ; any_key_to_continue ;;
             2) curl https://raw.githubusercontent.com/ludashi2020/backtrace/main/install.sh -sSf | sh ; any_key_to_continue ;;
             3) bash <(curl -sL https://run.NodeQuality.com) ; any_key_to_continue ;;
+            4) bash <(wget -qO- --no-check-certificate https://gitlab.com/spiritysdx/za/-/raw/main/ecs.sh) ; any_key_to_continue ;;
             x|X) exit 0 ;;
             0) break ;;
         esac
@@ -311,7 +313,7 @@ menu_test() {
 menu_proxy() {
     while true; do
         draw_banner
-        echo -e "${BYellow}▶1. 3x-ui面板"
+        echo -e "${BYellow}▶1. 3X-UI面板"
         echo -e "${BYellow}▶2. Realm转发"
         echo -e "${BYellow}▶3. SS-Xray-2go"
         echo -e "${BYellow}▶4. vless-all-in-one"
@@ -332,8 +334,8 @@ menu_proxy() {
 menu_jk() {
     while true; do
         draw_banner
-        echo -e "${BYellow}▶1. 流量狗"
-        echo -e "${BYellow}▶2. DDNS"
+        echo -e "${BYellow}▶1. 端口流量狗"
+        echo -e "${BYellow}▶2. DDNS动态域名"
         echo -e "${BOrange}▶X. 退出${NC}"
         echo -e "${BRed}▶0. 返回主菜单${NC}"
         read -r -p $'\033[1;36m请输入选择: \033[0m' sub
