@@ -91,5 +91,4 @@ cat "$PRIVATE_KEY"
 
 echo -e "\n${GREEN}==================================================${RESET}"
 echo -e "${YELLOW}私钥路径: $PRIVATE_KEY${RESET}"
-echo -e "${YELLOW}当前时间: $(date +'%Y年%m月%d日 %H:%M:%S')${RESET}"
 echo -e "${GREEN}==================================================${RESET}"
