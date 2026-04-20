@@ -74,7 +74,6 @@ if [ "$final_hostname" == "$new_hostname" ]; then
     echo -e "${GREEN}✅ 主机名修改成功！${RESET}"
     echo -e "${YELLOW}新主机名: ${RESET}${final_hostname}"
     echo -e "${YELLOW}提示: 请重新连接 SSH 以查看终端提示符更新。${RESET}"
-    echo -e "${YELLOW}当前时间: $(date +'%Y年%m月%d日 %H:%M:%S')${RESET}"
 else
     echo -e "${RED}❌ 修改可能未完全成功，请手动检查 /etc/hostname${RESET}"
 fi
