@@ -270,8 +270,9 @@ menu_system() {
         echo -e "${BYellow}▶ 7. 设置SWAP内存${NC}"
         echo -e "${BYellow}▶ 8. SSH密钥登录"
         echo -e "${BYellow}▶ 9. Fail2Ban"
-        echo -e "${BYellow}▶10. 重装系统(DD)${NC}"
-        echo -e "${BYellow}▶11. 系统重启${NC}"
+        echo -e "${BYellow}▶10. 定时任务"
+        echo -e "${BYellow}▶11. 重装系统(DD)${NC}"
+        echo -e "${BYellow}▶12. 系统重启${NC}"
         echo -e "${BOrange}▶ X. 退出${NC}"
         echo -e "${BRed}▶ 0. 返回主菜单${NC}"
         read -r -p $'\033[1;36m请输入选择: \033[0m' sub
@@ -285,8 +286,9 @@ menu_system() {
             7) bash <(curl -sL https://raw.githubusercontent.com/Polarisiu/tool/main/vpsswap.sh) ; any_key_to_continue ;;
             8) bash <(curl -sL https://raw.githubusercontent.com/Polarisiu/tool/main/sshkey.sh) ; any_key_to_continue ;;
             9) bash <(curl -sL https://raw.githubusercontent.com/Polarisiu/tool/main/Fail2Ban.sh) ; any_key_to_continue ;;
-            10) bash <(curl -sL https://raw.githubusercontent.com/Polarisiu/tool/main/VPSDD.sh) ; any_key_to_continue ;;
-            11) sudo reboot ;;
+            10) bash <(curl -sL https://raw.githubusercontent.com/Polarisiu/tool/main/crontab.sh) ; any_key_to_continue ;;
+            11) bash <(curl -sL https://raw.githubusercontent.com/Polarisiu/tool/main/VPSDD.sh) ; any_key_to_continue ;;
+            12) sudo reboot ;;
             x|X) exit 0 ;;
             0) break ;;
         esac
@@ -372,7 +374,7 @@ menu_jk() {
         read -r -p $'\033[1;36m请输入选择: \033[0m' sub
         case "$sub" in
             1) wget -O port-traffic-dog.sh https://raw.githubusercontent.com/zywe03/realm-xwPF/main/port-traffic-dog.sh && chmod +x port-traffic-dog.sh && ./port-traffic-dog.sh ; any_key_to_continue ;;
-            2) bash <(wget -qO- https://raw.githubusercontent.com/mocchen/cssmeihua/mochen/shell/ddns.sh) ; any_key_to_continue ;;
+            2) bash <(curl -sL https://raw.githubusercontent.com/Polarisiu/tool/main/DDNS.sh) ; any_key_to_continue ;;
             x|X) exit 0 ;;
             0) break ;;
         esac
