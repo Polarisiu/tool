@@ -28,7 +28,7 @@ fi
 # 分支 1: Alpine 极简路径
 # ========================================
 if [ "$OS_ID" = "alpine" ]; then
-    echo -e "${YELLOW}🚀 Alpine 极简更新...${RESET}"
+    echo -e "${YELLOW}🚀 Alpine更新...${RESET}"
     apk update && apk upgrade
     apk add --no-cache bash curl wget vim tar sudo git gzip openssl openssh ca-certificates tzdata
     
