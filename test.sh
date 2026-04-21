@@ -480,26 +480,47 @@ status_check() {
     fi
     echo ""
 
+  
     # =============================
     # DNS 检测
     # =============================
-    echo -e "${YELLOW}▶ DNS 信息${RESET}"
+    echo -e "${YELLOW}▶ DNS 信息检测${RESET}"
+
+    # 确保工具存在
+    [[ ! $(command -v dig) ]] && apk add --no-cache bind-tools >/dev/null 2>&1
+
+    # 提取 DNS 列表
     dns_all=$(grep "nameserver" /etc/resolv.conf | awk '{print $2}')
     dns_v4=$(echo "$dns_all" | grep -v ":" | tr '\n' ' ')
     dns_v6=$(echo "$dns_all" | grep ":" | tr '\n' ' ')
+
+    # --- IPv4 部分 ---
     if [[ -n "$dns_v4" ]]; then
         echo -e "DNSv4: ${CYAN}${dns_v4}${RESET}"
-        test_v4=$(first_dns=$(echo $dns_v4 | awk '{print $1}'); dig +short +time=1 +tries=1 google.com @$first_dns >/dev/null 2>&1 && echo "ok" || echo "fail")
-        if [[ "$test_v4" == "ok" ]]; then echo -e "解析: ${GREEN}IPv4 正常${RESET}"
-        else echo -e "解析: ${RED}IPv4 失败或超时${RESET}"; fi
-    else echo -e "DNSv4: ${RED}无${RESET}"; fi
+        first_dns=$(echo $dns_v4 | awk '{print $1}')
+        test_v4=$(dig +short +time=2 +tries=1 google.com @$first_dns >/dev/null 2>&1 && echo "ok" || echo "fail")
+        [[ "$test_v4" == "ok" ]] && echo -e "解析: ${GREEN}IPv4 正常${RESET}" || echo -e "解析: ${RED}IPv4 失败${RESET}"
+    else
+        echo -e "DNSv4: ${RED}无${RESET}"
+    fi
+
+    # --- IPv6 部分  ---
     if [[ -n "$dns_v6" ]]; then
         echo -e "DNSv6: ${CYAN}${dns_v6}${RESET}"
-        test_v6=$(first_dns6=$(echo $dns_v6 | awk '{print $1}'); dig +short +time=1 +tries=1 google.com AAAA @$first_dns6 >/dev/null 2>&1 && echo "ok" || echo "fail")
-        if [[ "$test_v6" == "ok" ]]; then echo -e "解析: ${GREEN}IPv6 正常${RESET}"
-        else echo -e "解析: ${RED}IPv6 失败或超时${RESET}"; fi
+        first_dns6=$(echo $dns_v6 | awk '{print $1}')
+        # 测试 AAAA 记录解析
+        test_v6=$(dig +short +time=2 +tries=1 google.com AAAA @$first_dns6 >/dev/null 2>&1 && echo "ok" || echo "fail")
+        
+        if [[ "$test_v6" == "ok" ]]; then
+            echo -e "解析: ${GREEN}IPv6 正常${RESET}"
+        else
+            echo -e "解析: ${RED}IPv6 失败${RESET}"
+        fi
+    else
+        echo -e "DNSv6: ${RED}无配置${RESET}"
     fi
-    echo ""
+
+
 }
 
 # 运行检测
