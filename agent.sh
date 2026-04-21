@@ -17,7 +17,7 @@ plain='\033[0m'
 # 输出函数
 info() { printf "${yellow}[INFO] %s${plain}\n" "$*"; }
 err() { printf "${red}[ERROR] %s${plain}\n" "$*" >&2; }
-success() { printf "${green}[SUCCESS] %s${plain}\n" "$*"; }
+success() { printf "${yellow}[SUCCESS] %s${plain}\n" "$*"; }
 
 # 权限检查
 sudo_exec() {
@@ -85,7 +85,6 @@ uninstall_komari() {
     # 清理残留文件
     info "清理 Komari 文件残留..."
     sudo_exec rm -rf "$KOMARI_PATH"
-    sudo_exec rm -rf "/var/log/komari"
     
     success "Komari-agent 卸载完成"
 }
@@ -94,4 +93,4 @@ uninstall_komari() {
 echo -e "${yellow}--- 自动化清理程序启动 ---${plain}"
 uninstall_nezha
 uninstall_komari
-echo -e "${green}--- 所有组件已检测并尝试清理完毕 ---${plain}"
+echo -e "${yellow}--- 所有组件已检测清理完毕 ---${plain}"
