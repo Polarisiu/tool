@@ -239,7 +239,7 @@ draw_banner() {
     echo -e " ${BOrange}🧩 架构 :${NC} ${BOrange}$CPU_INFO${NC}"
     echo -e " ${BOrange}🌍 时区 :${NC} ${BOrange}$TIME_ZONE${NC}"
     echo -e " ${BOrange}🕒 时间 :${NC} ${BOrange}$TIME_NOW${NC}"
-    echo -e " ${BOrange}🚀 运行 :${NC} ${BYellow}$UPTIME${NC}"
+    echo -e " ${BOrange}🚀 运行 :${NC} ${BYellow}$UPTIME${NC}  ${BBlue}V:核心状态检测${NC}"
     echo -e "${BCyan}────────────────────────────────────────────────${NC}"
 }
 
@@ -415,6 +415,10 @@ while true; do
         6) menu_app ;;
         8) update_script ;;
         9) uninstall_script ;;
+        v|V)
+            bash <(curl -sL https://raw.githubusercontent.com/Polarisiu/tool/main/test.sh)
+            any_key_to_continue 
+            ;;
         0) exit 0 ;;
         *) echo -e "${BRed}无效输入${NC}" && sleep 1 ;;
     esac
