@@ -82,11 +82,11 @@ case "$OS" in
         enable_bbr_alpine
         ;;
     debian|ubuntu|centos|rocky|almalinux|fedora)
-        echo -e "${GREEN}检测到系统为 $OS (KVM/独立内核)，调用标准 BBR 脚本...${RESET}"
+        echo -e "${GREEN}检测到系统为 $OS (KVM/独立内核)，调用标准 BBR${RESET}"
         bash <(curl -sL https://raw.githubusercontent.com/Polarisiu/tool/main/BBRTCP.sh)
         ;;
     *)
-        echo -e "${YELLOW}未能精准识别系统，尝试运行通用脚本...${RESET}"
+        echo -e "${YELLOW}未能精准识别系统，尝试运行通用BBR${RESET}"
         bash <(curl -sL https://raw.githubusercontent.com/Polarisiu/tool/main/BBRTCP.sh)
         ;;
 esac
