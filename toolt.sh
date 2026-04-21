@@ -239,7 +239,7 @@ draw_banner() {
     echo -e " ${BOrange}🧩 架构 :${NC} ${BOrange}$CPU_INFO${NC}"
     echo -e " ${BOrange}🌍 时区 :${NC} ${BOrange}$TIME_ZONE${NC}"
     echo -e " ${BOrange}🕒 时间 :${NC} ${BOrange}$TIME_NOW${NC}"
-    echo -e " ${BOrange}🚀 运行 :${NC} ${BYellow}$UPTIME${NC}  ${BBlue}V:核心状态检测${NC}"
+    echo -e " ${BOrange}🚀 运行 :${NC} ${BYellow}$UPTIME${NC}"
     echo -e "${BCyan}────────────────────────────────────────────────${NC}"
 }
 
@@ -252,6 +252,7 @@ main_menu() {
     echo -e "${BYellow}▶4. 网络代理${NC}"
     echo -e "${BYellow}▶5. 网络监控${NC}"
     echo -e "${BYellow}▶6. 玩具熊ʕ•ᴥ•ʔ${NC}"
+    echo -e "${BYellow}▶7. 核心状态检测${NC}"
     echo -e "${BGreen}▶8. 更新工具箱${NC}"
     echo -e "${BGreen}▶9. 卸载工具箱${NC}"
     echo -e "${BRed}▶0. 退出${NC}"
@@ -260,7 +261,6 @@ main_menu() {
 # 二级菜单处理逻辑
 menu_system() {
     while true; do
-        draw_banner
         echo -e "${BYellow}▶ 1. 更新系统${NC}"
         echo -e "${BYellow}▶ 2. 系统信息${NC}"
         echo -e "${BYellow}▶ 3. 系统清理${NC}"
@@ -297,7 +297,6 @@ menu_system() {
 
 menu_network() {
     while true; do
-        draw_banner
         echo -e "${BYellow}▶1. BBR调优"
         echo -e "${BYellow}▶2. 切换v4/v6"
         echo -e "${BYellow}▶3. 开放所有端口"
@@ -324,11 +323,11 @@ menu_network() {
 
 menu_test() {
     while true; do
-        draw_banner
         echo -e "${BYellow}▶1. 流媒体解锁检测"
         echo -e "${BYellow}▶2. 回程线路检测"
         echo -e "${BYellow}▶3. NodeQuality"
-        echo -e "${BYellow}▶4. 融合怪"
+        echo -e "${BYellow}▶4. 融合怪检测"
+        echo -e "${BYellow}▶5. IP质量检测"
         echo -e "${BOrange}▶X. 退出${NC}"
         echo -e "${BRed}▶0. 返回主菜单${NC}"
         read -r -p $'\033[1;36m请输入选择: \033[0m' sub
@@ -337,6 +336,7 @@ menu_test() {
             2) curl https://raw.githubusercontent.com/ludashi2020/backtrace/main/install.sh -sSf | sh ; any_key_to_continue ;;
             3) bash <(curl -sL https://run.NodeQuality.com) ; any_key_to_continue ;;
             4) bash <(wget -qO- --no-check-certificate https://gitlab.com/spiritysdx/za/-/raw/main/ecs.sh) ; any_key_to_continue ;;
+            5) bash <(curl -sL https://raw.githubusercontent.com/Polarisiu/tool/main/ipq.sh) ; any_key_to_continue ;;
             x|X) exit 0 ;;
             0) break ;;
         esac
@@ -345,7 +345,6 @@ menu_test() {
 
 menu_proxy() {
     while true; do
-        draw_banner
         echo -e "${BYellow}▶1. 3X-UI面板"
         echo -e "${BYellow}▶2. Realm转发"
         echo -e "${BYellow}▶3. SS-Xray-2go"
@@ -366,7 +365,6 @@ menu_proxy() {
 
 menu_jk() {
     while true; do
-        draw_banner
         echo -e "${BYellow}▶1. 端口流量狗"
         echo -e "${BYellow}▶2. DDNS动态域名"
         echo -e "${BOrange}▶X. 退出${NC}"
@@ -383,7 +381,6 @@ menu_jk() {
 
 menu_app() {
     while true; do
-        draw_banner
         echo -e "${BYellow}▶1. Emby反代"
         echo -e "${BYellow}▶2. 关闭哪吒V1SSH"
         echo -e "${BYellow}▶3. 卸载探针"
@@ -415,7 +412,7 @@ while true; do
         6) menu_app ;;
         8) update_script ;;
         9) uninstall_script ;;
-        v|V)
+        7)
             bash <(curl -sL https://raw.githubusercontent.com/Polarisiu/tool/main/test.sh)
             any_key_to_continue 
             ;;
