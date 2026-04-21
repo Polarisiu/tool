@@ -6,7 +6,7 @@
 
 NZ_BASE_PATH="/opt/nezha"
 NZ_AGENT_PATH="${NZ_BASE_PATH}/agent"
-KOMARI_PATH="/opt/komari"
+KOMARI_PATH="/opt/komari/agent"
 
 # 颜色定义
 red='\033[0;31m'
