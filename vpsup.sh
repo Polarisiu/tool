@@ -70,6 +70,11 @@ if [ "$ID" = "alpine" ]; then
         # 后台启动 crond
         crond -b -L /var/log/cron.log
     fi
+    # -------------------------
+    # 🧹 清理缓存 (新增)
+    # -------------------------
+    echo -e "${YELLOW}🧹 清理 APK 缓存...${RESET}"
+    rm -rf /var/cache/apk/*
 
     echo -e "${GREEN}✅ Alpine 更新完成${RESET}"
     echo -e "${YELLOW}当前时间: $(date +'%Y-%m-%d %H:%M:%S')${RESET}"
@@ -344,8 +349,8 @@ enable_bbr() {
 
     # 1️⃣ 尝试加载 BBR 模块
     if ! modprobe tcp_bbr 2>/dev/null; then
-        echo -e "${RED}❌ 当前内核未编译 BBR 或不支持${RESET}"
-        return 1
+        echo -e "${RED}❌ 当前内核未编译 BBR 或不支持(OpenVZ/LXC 虚拟化不支持)${RESET}"
+        return 0
     fi
 
     # 2️⃣ 写入模块自动加载（避免重复）
@@ -376,8 +381,9 @@ EOF
         echo -e "${GREEN}✔ BBR 已成功开启${RESET}"
     else
         echo -e "${RED}❌ BBR 开启失败，请检查内核配置${RESET}"
-        return 1
     fi
+
+    return 0
 }
 
 # -------------------------
@@ -425,13 +431,35 @@ enable_time_sync() {
     if systemctl is-active --quiet systemd-timesyncd; then
         echo -e "${GREEN}✔ 时间同步服务已成功启动${RESET}"
     else
-        echo -e "${RED}❌ 时间同步服务启动失败${RESET}"
+        echo -e "${RED}❌ 时间同步服务启动失败(OpenVZ/LXC 虚拟化不支持)${RESET}"
     fi
 }
 
 # -------------------------
-# 执行
+# 清理函数
 # -------------------------
+cleanup() {
+    echo -e "${YELLOW}🧹 正在清理系统冗余缓存...${RESET}"
+    case "$OS_TYPE" in
+        debian)
+            apt-get autoremove -y >/dev/null 2>&1
+            apt-get clean >/dev/null 2>&1
+            ;;
+        rhel)
+            dnf autoremove -y >/dev/null 2>&1
+            dnf clean all >/dev/null 2>&1
+            ;;
+        alpine)
+            rm -rf /var/cache/apk/*
+            ;;
+    esac
+    echo -e "${GREEN}✔ 清理完成${RESET}"
+}
+
+# ==========================================
+# 脚本执行入口
+# ==========================================
+
 clear
 update_system
 install_netcat
@@ -440,3 +468,12 @@ install_cron
 install_nexttrace
 enable_bbr
 enable_time_sync
+
+# 最后执行清理
+cleanup
+
+# 最终展示
+echo -e "${GREEN}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${RESET}"
+echo -e "${GREEN}🎉 系统更新工作已全部完成！${RESET}"
+echo -e "${YELLOW}📅 完成时间: $(date +'%Y-%m-%d %H:%M:%S')${RESET}"
+echo -e "${GREEN}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${RESET}"
