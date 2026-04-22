@@ -381,14 +381,14 @@ menu_jk() {
 
 menu_app() {
     while true; do
-        echo -e "${BYellow}▶1. Emby反代"
+        echo -e "${BYellow}▶1. 反向代理"
         echo -e "${BYellow}▶2. 关闭哪吒V1SSH"
         echo -e "${BYellow}▶3. 卸载探针"
         echo -e "${BOrange}▶X. 退出${NC}"
         echo -e "${BRed}▶0. 返回主菜单${NC}"
         read -r -p $'\033[1;36m请输入选择: \033[0m' sub
         case "$sub" in
-            1) bash <(curl -sL https://raw.githubusercontent.com/Polarisiu/tool/main/Embyfd.sh) ; any_key_to_continue ;;
+            1) bash <(curl -sL https://raw.githubusercontent.com/Polarisiu/tool/main/nginx.sh) ; any_key_to_continue ;;
             2) sed -i 's/disable_command_execute: false/disable_command_execute: true/' /opt/nezha/agent/config.yml && systemctl restart nezha-agent ; any_key_to_continue ;;
             3) bash <(curl -sL https://raw.githubusercontent.com/Polarisiu/tool/main/agent.sh) ; any_key_to_continue ;;
             x|X) exit 0 ;;
