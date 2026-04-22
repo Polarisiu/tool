@@ -75,7 +75,7 @@ restore_default() {
     echo -e "${YELLOW}恢复系统默认 DNS...${RESET}"
     chattr -i $RESOLV_FILE 2>/dev/null
     rm -f $RESOLV_FILE
-    echo -e "${GREEN}已解锁并删除静态配置${RESET}"
+    echo -e "${GREEN}已解锁并删除静态配置DNS，请重启VPS或配置新的DNS${RESET}"
 }
 
 show_dns() {
@@ -87,14 +87,14 @@ show_dns() {
 menu() {
     clear
     echo -e "${GREEN}======  DNS 管理工具 ======${RESET}"
-    echo -e "${GREEN}1) Google DNS (8.8.8.8)${RESET}"
-    echo -e "${GREEN}2) Cloudflare DNS (1.1.1.1)${RESET}"
-    echo -e "${GREEN}3) 阿里云 DNS (223.5.5.5)${RESET}"
-    echo -e "${GREEN}4) 腾讯云 DNS (119.29.29.29)${RESET}"
-    echo -e "${GREEN}5) Claw 专用 DNS (100.100.2.136)${RESET}"
-    echo -e "${GREEN}6) IPv6 DNS (CF+Google)${RESET}"
+    echo -e "${GREEN}1) Google DNS (8.8.8.8,1.1.1.1)${RESET}"
+    echo -e "${GREEN}2) Cloudflare DNS (1.1.1.1,1.0.0.1)${RESET}"
+    echo -e "${GREEN}3) 阿里云 DNS (223.5.5.5,223.6.6.6 )${RESET}"
+    echo -e "${GREEN}4) 腾讯云 DNS (119.29.29.29,119.28.28.28)${RESET}"
+    echo -e "${GREEN}5) Claw 专用 DNS (100.100.2.136,100.100.2.138)${RESET}"
+    echo -e "${GREEN}6) IPv6 DNS (Cloudflare+Google)${RESET}"
     echo -e "${GREEN}7) 自定义 DNS${RESET}"
-    echo -e "${GREEN}8) 恢复默认解锁文件${RESET}"
+    echo -e "${GREEN}8) 恢复默认${RESET}"
     echo -e "${GREEN}9) 查看当前 DNS${RESET}"
     echo -e "${GREEN}0) 退出${RESET}"
     read -p $'\033[32m请选择: \033[0m' choice
