@@ -330,6 +330,10 @@ install_nexttrace() {
     fi
 
     echo -e "${YELLOW}👉 开始安装 NextTrace...${RESET}"
+    # 解决 Debian 11 证书过旧的问题
+    if [ -f /etc/debian_version ]; then
+        apt install -y curl ca-certificates
+    fi
 
     curl -sL https://nxtrace.org/nt | bash
 
