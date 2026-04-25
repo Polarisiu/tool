@@ -24,7 +24,7 @@ echo " 5. Debian 12"
 echo " 6. Debian 13"
 echo " 7. Ubuntu 22.04"
 echo " 8. Ubuntu 24.04"
-echo " 9. Ubuntu 25.10"
+echo " 9. Ubuntu 26.04"
 echo "10. Alpine 3.23"
 echo " 0. 退出"
 echo "======================================"
@@ -134,7 +134,7 @@ bash reinstall.sh ubuntu 24.04 \
 ;;
 
 9)
-bash reinstall.sh ubuntu 25.10 \
+bash reinstall.sh ubuntu 26.04 \
 --password "$SYS_PASS" \
 --ssh-port "$SSH_PORT"
 ;;
