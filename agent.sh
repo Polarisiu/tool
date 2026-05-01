@@ -1,6 +1,6 @@
 #!/bin/sh
 # ==========================================
-# 哪吒监控 & Komari Agent 全自动卸载工具
+# 哪吒监控 & Komari Agent & NodeGet Agent 全自动卸载工具
 # 支持系统: Alpine (OpenRC), Debian/Ubuntu/CentOS (Systemd)
 # ==========================================
 
@@ -17,7 +17,7 @@ plain='\033[0m'
 # 输出函数
 info() { printf "${yellow}[INFO] %s${plain}\n" "$*"; }
 err() { printf "${red}[ERROR] %s${plain}\n" "$*" >&2; }
-success() { printf "${yellow}[SUCCESS] %s${plain}\n" "$*"; }
+success() { printf "${green}[SUCCESS] %s${plain}\n" "$*"; }
 
 # 权限检查
 sudo_exec() {
@@ -47,7 +47,6 @@ uninstall_nezha() {
 
         info "清理哪吒文件..."
         sudo_exec rm -rf "$NZ_AGENT_PATH"
-        # 如果父目录为空则清理
         if [ -d "$NZ_BASE_PATH" ] && [ -z "$(ls -A "$NZ_BASE_PATH" 2>/dev/null)" ]; then
             sudo_exec rm -rf "$NZ_BASE_PATH"
         fi
@@ -61,7 +60,7 @@ uninstall_nezha() {
 uninstall_komari() {
     info "开始检测并停止 Komari-agent..."
 
-    # Systemd 环境 (Debian/Ubuntu/CentOS)
+    # Systemd
     if command -v systemctl >/dev/null 2>&1; then
         if systemctl list-unit-files | grep -q "komari-agent"; then
             sudo_exec systemctl stop komari-agent >/dev/null 2>&1 || true
@@ -72,7 +71,7 @@ uninstall_komari() {
         fi
     fi
 
-    # OpenRC 环境 (Alpine)
+    # OpenRC
     if command -v rc-service >/dev/null 2>&1; then
         if [ -f "/etc/init.d/komari-agent" ]; then
             sudo_exec rc-service komari-agent stop >/dev/null 2>&1 || true
@@ -82,15 +81,24 @@ uninstall_komari() {
         fi
     fi
 
-    # 清理残留文件
     info "清理 Komari 文件残留..."
     sudo_exec rm -rf "$KOMARI_PATH"
     
     success "Komari-agent 卸载完成"
 }
 
+# --- 3. 卸载 NodeGet Agent ---
+uninstall_nodeget() {
+    info "开始卸载 NodeGet Agent..."
+    bash <(curl -sL https://install.nodeget.com) uninstall-agent
+    success "NodeGet Agent 卸载完成"
+}
+
 # --- 执行流程 ---
 echo -e "${yellow}--- 自动化清理程序启动 ---${plain}"
+
 uninstall_nezha
 uninstall_komari
+uninstall_nodeget
+
 echo -e "${yellow}--- 所有组件已检测清理完毕 ---${plain}"
