@@ -74,7 +74,7 @@ check_curl() {
 # 开始安装DDNS
 install_ddns(){
     if [ ! -f "/usr/bin/ddns" ]; then
-        curl -o /usr/bin/ddns https://raw.githubusercontent.com/Polarisiu/tool/main/DDNS.sh && chmod +x /usr/bin/ddns
+        curl -o /usr/bin/ddns https://raw.githubusercontent.com/sistarry/toolbox/main/PROXY/DDNS.sh && chmod +x /usr/bin/ddns
     fi
     mkdir -p /etc/DDNS
     cat <<'EOF' > /etc/DDNS/DDNS
@@ -409,7 +409,7 @@ set_cloudflare_api(){
     echo -e "${Info}你的邮箱：${RED_ground}${EMAIL}${NC}"
     echo
 
-    echo -e "${Tip}请输入您的Cloudflare API密钥"
+    echo -e "${Tip}请输入您的Cloudflare API(GlobalAPIKey)密钥"
     read -rp "密钥: " Api_Key
     if [ -z "Api_Key" ]; then
         echo -e "${Error}未输入密钥，无法执行操作！"
@@ -430,7 +430,7 @@ set_domain() {
     ipv4_check=$(curl -s ip.sb -4)
     if [ -n "$ipv4_check" ]; then
         echo -e "${Info}检测到IPv4地址: ${ipv4_check}"
-        echo -e "${Tip}请输入您要解析的IPv4域名（可解析多个域名，使用逗号分隔） (或按回车跳过)"
+        echo -e "${Tip}请输入您要解析的IPv4域名（例如:ddns4.888.xyz可解析多个域名，使用逗号分隔） (或按回车跳过)"
         read -rp "IPv4域名: " Domain_input
         if [ -z "$Domain_input" ]; then
             echo -e "${Info}跳过IPv4域名设置。"
@@ -463,7 +463,7 @@ set_domain() {
                 # 更新 .config 文件中的 ipv6_set 为 true
                 sed -i 's/^#\?ipv6_set=".*"/ipv6_set="true"/g' /etc/DDNS/.config
 
-                echo -e "${Tip}请输入您要解析的IPv6域名（可解析多个域名，使用逗号分隔） (或按回车跳过)"
+                echo -e "${Tip}请输入您要解析的IPv6域名（例如:ddns6.888.xyz可解析多个域名，使用逗号分隔） (或按回车跳过)"
                 read -rp "IPv6域名: " Domainv6_input
 
                 if [ -z "$Domainv6_input" ]; then
