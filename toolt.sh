@@ -158,9 +158,9 @@ get_sys_status() {
 
     # 4. 系统状态动态判断
     if [ "$CPU_VAL" -gt 90 ] || [ "$MEM_PCT" -gt 90 ] || [ "$DISK_VAL" -gt 90 ] || [ "$SWAP_PCT" -gt 80 ]; then
-        SYS_STATE="${BRed}危险 ⚡${NC}"
+        SYS_STATE="${BRed}危险 🔥${NC}"
     elif [ "$CPU_VAL" -gt 70 ] || [ "$MEM_PCT" -gt 70 ] || [ "$DISK_VAL" -gt 70 ]; then
-        SYS_STATE="${BYellow}注意 ⚠️${NC}"
+        SYS_STATE="${BYellow}注意 ⚡${NC}"
     else
         SYS_STATE="${BGreen}正常 ✔${NC}"
     fi
@@ -181,6 +181,7 @@ get_sys_status() {
         -e 's/[Cc][Pp][Uu]//g' \
         -e 's/[Pp]rocessor//g' \
         -e 's/[0-9]+-Core//g' \
+        -e 's/\bv[1-9]\b//g' \
         -e 's/^[[:space:]]*|[[:space:]]*$//g' \
         -e 's/[[:space:]]+/ /g')
 
@@ -382,7 +383,7 @@ menu_jk() {
 menu_app() {
     while true; do
         echo -e "${BYellow}▶1. 反向代理"
-        echo -e "${BYellow}▶2. 关闭哪吒V1SSH"
+        echo -e "${BYellow}▶2. 关闭哪吒监控SSH"
         echo -e "${BYellow}▶3. 卸载探针"
         echo -e "${BOrange}▶X. 退出${NC}"
         echo -e "${BRed}▶0. 返回主菜单${NC}"
