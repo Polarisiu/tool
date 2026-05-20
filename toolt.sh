@@ -247,35 +247,35 @@ draw_banner() {
 # 一级主菜单
 main_menu() {
     draw_banner
-    echo -e "${BYellow}▶1. 系统设置${NC}"
-    echo -e "${BYellow}▶2. 网络设置${NC}"
-    echo -e "${BYellow}▶3. 网络检测${NC}"
-    echo -e "${BYellow}▶4. 网络代理${NC}"
-    echo -e "${BYellow}▶5. 网络监控${NC}"
-    echo -e "${BYellow}▶6. 玩具熊ʕ•ᴥ•ʔ${NC}"
-    echo -e "${BYellow}▶7. 核心状态检测${NC}"
-    echo -e "${BGreen}▶8. 更新工具箱${NC}"
-    echo -e "${BGreen}▶9. 卸载工具箱${NC}"
-    echo -e "${BRed}▶0. 退出${NC}"
+    echo -e "${BYellow}▶ 1. 系统设置${NC}"
+    echo -e "${BYellow}▶ 2. 网络设置${NC}"
+    echo -e "${BYellow}▶ 3. 网络检测${NC}"
+    echo -e "${BYellow}▶ 4. 网络代理${NC}"
+    echo -e "${BYellow}▶ 5. 网络监控${NC}"
+    echo -e "${BYellow}▶ 6. 玩具熊ʕ•ᴥ•ʔ${NC}"
+    echo -e "${BYellow}▶ 7. 核心状态检测${NC}"
+    echo -e "${BGreen}▶ 8. 更新工具箱${NC}"
+    echo -e "${BGreen}▶ 9. 卸载工具箱${NC}"
+    echo -e "${BRed}▶ 0. 退出${NC}"
 }
 
 # 二级菜单处理逻辑
 menu_system() {
     while true; do
-        echo -e "${BYellow}▶ 1. 更新系统${NC}"
-        echo -e "${BYellow}▶ 2. 系统信息${NC}"
-        echo -e "${BYellow}▶ 3. 系统清理${NC}"
-        echo -e "${BYellow}▶ 4. 修改主机名${NC}"
-        echo -e "${BYellow}▶ 5. 修改Root密码${NC}"
-        echo -e "${BYellow}▶ 6. 修改SSH端口${NC}"
-        echo -e "${BYellow}▶ 7. 设置SWAP内存${NC}"
-        echo -e "${BYellow}▶ 8. SSH密钥登录"
-        echo -e "${BYellow}▶ 9. Fail2Ban"
-        echo -e "${BYellow}▶10. 定时任务"
-        echo -e "${BYellow}▶11. 重装系统(DD)${NC}"
-        echo -e "${BYellow}▶12. 系统重启${NC}"
-        echo -e "${BOrange}▶ X. 退出${NC}"
-        echo -e "${BRed}▶ 0. 返回主菜单${NC}"
+        echo -e "${BYellow}▶  1. 更新系统${NC}"
+        echo -e "${BYellow}▶  2. 系统信息${NC}"
+        echo -e "${BYellow}▶  3. 系统清理${NC}"
+        echo -e "${BYellow}▶  4. 修改主机名${NC}"
+        echo -e "${BYellow}▶  5. 修改root密码${NC}"
+        echo -e "${BYellow}▶  6. 修改SSH端口${NC}"
+        echo -e "${BYellow}▶  7. 设置SWAP内存${NC}"
+        echo -e "${BYellow}▶  8. SSH密钥登录"
+        echo -e "${BYellow}▶  9. Fail2ban"
+        echo -e "${BYellow}▶ 10. 定时任务"
+        echo -e "${BYellow}▶ 11. 重装系统DD${NC}"
+        echo -e "${BYellow}▶ 12. 系统重启${NC}"
+        echo -e "${BOrange}▶  X. 退出${NC}"
+        echo -e "${BRed}▶  0. 返回主菜单${NC}"
         read -r -p $'\033[1;36m请输入选择: \033[0m' sub
         case "$sub" in
             1) bash <(curl -sL https://raw.githubusercontent.com/Polarisiu/tool/main/vpsup.sh) ; any_key_to_continue ;;
@@ -298,15 +298,15 @@ menu_system() {
 
 menu_network() {
     while true; do
-        echo -e "${BYellow}▶1. BBR调优"
-        echo -e "${BYellow}▶2. 切换v4/v6"
-        echo -e "${BYellow}▶3. 开放所有端口"
-        echo -e "${BYellow}▶4. DNS设置"
-        echo -e "${BYellow}▶5. AkileDNS"
-        echo -e "${BYellow}▶6. CFWARP"
-        echo -e "${BYellow}▶7. EasyTier组网"
-        echo -e "${BOrange}▶X. 退出${NC}"
-        echo -e "${BRed}▶0. 返回主菜单${NC}"
+        echo -e "${BYellow}▶ 1. BBR调优"
+        echo -e "${BYellow}▶ 2. 切换v4V6"
+        echo -e "${BYellow}▶ 3. 开放所有端口"
+        echo -e "${BYellow}▶ 4. DNS管理"
+        echo -e "${BYellow}▶ 5. Akile优选DNS"
+        echo -e "${BYellow}▶ 6. WARP"
+        echo -e "${BYellow}▶ 7. easytier组网"
+        echo -e "${BOrange}▶ X. 退出${NC}"
+        echo -e "${BRed}▶ 0. 返回主菜单${NC}"
         read -r -p $'\033[1;36m请输入选择: \033[0m' sub
         case "$sub" in
             1) bash <(curl -sL https://raw.githubusercontent.com/Polarisiu/tool/main/BBR.sh) ; any_key_to_continue ;;
@@ -324,13 +324,13 @@ menu_network() {
 
 menu_test() {
     while true; do
-        echo -e "${BYellow}▶1. 流媒体解锁检测"
-        echo -e "${BYellow}▶2. 回程线路检测"
-        echo -e "${BYellow}▶3. NodeQuality"
-        echo -e "${BYellow}▶4. 融合怪检测"
-        echo -e "${BYellow}▶5. IP质量检测"
-        echo -e "${BOrange}▶X. 退出${NC}"
-        echo -e "${BRed}▶0. 返回主菜单${NC}"
+        echo -e "${BYellow}▶ 1. 流媒体解锁检测"
+        echo -e "${BYellow}▶ 2. 回程线路检测"
+        echo -e "${BYellow}▶ 3. NodeQuality"
+        echo -e "${BYellow}▶ 4. 融合怪检测"
+        echo -e "${BYellow}▶ 5. IP质量检测"
+        echo -e "${BOrange}▶ X. 退出${NC}"
+        echo -e "${BRed}▶ 0. 返回主菜单${NC}"
         read -r -p $'\033[1;36m请输入选择: \033[0m' sub
         case "$sub" in
             1) bash <(curl -L -s https://raw.githubusercontent.com/lmc999/RegionRestrictionCheck/main/check.sh) ; any_key_to_continue ;;
@@ -346,18 +346,20 @@ menu_test() {
 
 menu_proxy() {
     while true; do
-        echo -e "${BYellow}▶1. 3X-UI面板"
-        echo -e "${BYellow}▶2. Realm转发"
-        echo -e "${BYellow}▶3. SS-Xray-2go"
-        echo -e "${BYellow}▶4. vless-all-in-one"
-        echo -e "${BOrange}▶X. 退出${NC}"
-        echo -e "${BRed}▶0. 返回主菜单${NC}"
+        echo -e "${BYellow}▶ 1. 3X-UI面板"
+        echo -e "${BYellow}▶ 2. S-UI面板"
+        echo -e "${BYellow}▶ 3. Realm转发"
+        echo -e "${BYellow}▶ 4. SS-Xray-2go"
+        echo -e "${BYellow}▶ 5. vless-all-in-one"
+        echo -e "${BOrange}▶ X. 退出${NC}"
+        echo -e "${BRed}▶ 0. 返回主菜单${NC}"
         read -r -p $'\033[1;36m请输入选择: \033[0m' sub
         case "$sub" in
             1) bash <(curl -sL https://raw.githubusercontent.com/Polarisiu/tool/main/3xui.sh) ; any_key_to_continue ;;
-            2) wget -qO- https://raw.githubusercontent.com/zywe03/realm-xwPF/main/xwPF.sh | sudo bash -s install ; any_key_to_continue ;;
-            3) bash <(curl -Ls https://raw.githubusercontent.com/Luckylos/xray-2go/refs/heads/main/xray_2go.sh) ; any_key_to_continue ;;
-            4) wget -O vless-server.sh https://raw.githubusercontent.com/Zyx0rx/vless-all-in-one/main/vless-server.sh && chmod +x vless-server.sh && ./vless-server.sh ; any_key_to_continue ;;
+            2) bash <(curl -Ls https://raw.githubusercontent.com/alireza0/s-ui/master/install.sh) ; any_key_to_continue ;;
+            3) wget -qO- https://raw.githubusercontent.com/zywe03/realm-xwPF/main/xwPF.sh | sudo bash -s install ; any_key_to_continue ;;
+            4) bash <(curl -Ls https://raw.githubusercontent.com/Luckylos/xray-2go/refs/heads/main/xray_2go.sh) ; any_key_to_continue ;;
+            5) wget -O vless-server.sh https://raw.githubusercontent.com/Zyx0rx/vless-all-in-one/main/vless-server.sh && chmod +x vless-server.sh && ./vless-server.sh ; any_key_to_continue ;;
             x|X) exit 0 ;;
             0) break ;;
         esac
@@ -366,10 +368,10 @@ menu_proxy() {
 
 menu_jk() {
     while true; do
-        echo -e "${BYellow}▶1. 端口流量狗"
-        echo -e "${BYellow}▶2. DDNS动态域名"
-        echo -e "${BOrange}▶X. 退出${NC}"
-        echo -e "${BRed}▶0. 返回主菜单${NC}"
+        echo -e "${BYellow}▶ 1. 端口流量狗"
+        echo -e "${BYellow}▶ 2. DDNS动态域名"
+        echo -e "${BOrange}▶ X. 退出${NC}"
+        echo -e "${BRed}▶ 0. 返回主菜单${NC}"
         read -r -p $'\033[1;36m请输入选择: \033[0m' sub
         case "$sub" in
             1) wget -O port-traffic-dog.sh https://raw.githubusercontent.com/zywe03/realm-xwPF/main/port-traffic-dog.sh && chmod +x port-traffic-dog.sh && ./port-traffic-dog.sh ; any_key_to_continue ;;
@@ -382,11 +384,11 @@ menu_jk() {
 
 menu_app() {
     while true; do
-        echo -e "${BYellow}▶1. 反向代理"
-        echo -e "${BYellow}▶2. 关闭哪吒监控SSH"
-        echo -e "${BYellow}▶3. 卸载探针"
-        echo -e "${BOrange}▶X. 退出${NC}"
-        echo -e "${BRed}▶0. 返回主菜单${NC}"
+        echo -e "${BYellow}▶ 1. 反向代理"
+        echo -e "${BYellow}▶ 2. 关闭哪吒监控SSH"
+        echo -e "${BYellow}▶ 3. 卸载探针"
+        echo -e "${BOrange}▶ X. 退出${NC}"
+        echo -e "${BRed}▶ 0. 返回主菜单${NC}"
         read -r -p $'\033[1;36m请输入选择: \033[0m' sub
         case "$sub" in
             1) bash <(curl -sL https://raw.githubusercontent.com/Polarisiu/tool/main/nginx.sh) ; any_key_to_continue ;;
